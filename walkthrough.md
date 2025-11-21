@@ -60,3 +60,83 @@ I have implemented a timeline UI using `vis-timeline` that allows adding, modify
   - Removed `image` property from "item 3" in `events.json`.
   - Verified via browser that "item 3" renders as `<span>item 3</span>` (no `<img>` tag).
   - Verified that other items (e.g., "item 2") still render with their images.
+
+## Add Event Feature
+
+### Implementation
+
+#### Backend (`server.js`)
+
+- **Dependencies**: Installed `multer` for file uploads and `sharp` for image processing.
+- **Endpoint**: `POST /api/events/create` handles multipart form data.
+- **Image Processing**:
+  - Accepts images via URL download or file upload.
+  - Converts all images to JPG with 80% quality.
+  - Generates unique filenames based on date and title: `img/YYYY/MM/DD-title.jpg`.
+  - Automatically creates 24x24px thumbnails in `thumb/` directory.
+  - Returns specific error messages for download failures.
+
+#### Shared Module (`lib/imageUtils.js`)
+
+- **Purpose**: Reusable image processing functions for both server and CLI.
+- **Functions**:
+  - `ensureDirectoryExists`: Creates directories recursively.
+  - `getUniqueFilename`: Ensures filename uniqueness with counter suffix.
+  - `generateThumbnail`: Creates 24x24px center-cropped thumbnails.
+  - `processImage`: Complete image processing pipeline.
+
+#### CLI Script (`scripts/regenerate_thumbnails.js`)
+
+- **Command**: `npm run regenerate-thumbnails`
+- **Purpose**: Regenerates all thumbnails from source images in `img/`.
+- **Features**:
+  - Recursively scans `img/` directory.
+  - Supports both JPG and PNG source images.
+  - Maintains directory structure in `thumb/`.
+  - Converts all thumbnails to JPG format.
+
+#### Frontend (`index.html`)
+
+- **Modal UI**: Clean, responsive modal for event creation.
+- **Form Fields**:
+  - Title (required)
+  - Date range toggle (checkbox)
+  - Start date (required)
+  - End date (conditional)
+  - Image source selector (radio: Upload/URL)
+- **Features**:
+  - Drag & drop file upload
+  - Click-to-select file upload
+  - URL-based image download
+  - Error display in modal (no alerts)
+  - Modal stays open on error
+- **Timeline Integration**:
+  - Thumbnail-first loading with fallback to original image.
+  - Template: `<img src="/thumb/..." onerror="this.src='/img/...'">`.
+
+### Verification Results
+
+#### URL Image Download
+
+- ✅ Tested with valid URL: `https://stopsopa.github.io/imgur/images/050-9ng3PRD.png`
+- ✅ Event "Error Test" created successfully
+- ✅ Image saved to: `img/2025/11/21-error_test.jpg`
+- ✅ Thumbnail generated: `thumb/2025/11/21-error_test.jpg`
+
+#### Error Handling
+
+- ✅ Invalid URL displays error message in modal
+- ✅ Modal remains open for correction
+- ✅ Error message: "Failed to download image from URL. Please check the URL and try again."
+
+#### CLI Thumbnail Regeneration
+
+- ✅ Command: `npm run regenerate-thumbnails`
+- ✅ Successfully processed 6 images
+- ✅ Generated thumbnails for both new events and existing images
+- ✅ Maintained directory structure
+
+#### File Uniqueness
+
+- ✅ Filename collision handling with counter suffix
+- ✅ Format: `DD-title.jpg`, `DD-title-1.jpg`, `DD-title-2.jpg`, etc.

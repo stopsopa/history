@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node --watch --env-file=.env server.js",
-    "regenerate-thumbnails": "node scripts/regenerate_thumbnails.js"
+    "thumb": "node scripts/regenerate_thumbnails.js"
   },
   "keywords": [
     "wysiwyg",
