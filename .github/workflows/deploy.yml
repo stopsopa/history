@@ -47,6 +47,15 @@ jobs:
           path: node_modules
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
 
+      - name: Run tests
+        env:
+          HOST: localhost
+          PORT: 3000
+          IMAGE_MAX_WIDTH: 1920
+          IMAGE_MAX_HEIGHT: 1080
+          THUMB_SIZE: 24
+        run: npm test
+
       - name: Generate thumbnails
         run: npm run thumb
 

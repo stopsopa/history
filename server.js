@@ -293,6 +293,10 @@ app.use(express.static(web, {
     hidden: false,
 }));
 
-app.listen(port, host, () => {
-    log(`\n 🌎  Server is running http://${host}:${port}\n`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(port, host, () => {
+        log(`\n 🌎  Server is running http://${host}:${port}\n`);
+    });
+}
+
+export default app;
