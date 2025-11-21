@@ -113,6 +113,16 @@
       .hidden {
         display: none;
       }
+      body .vis-tooltip {
+        display: none;
+      }
+      .vis-item {
+        background-color: #428bad;
+        /* color: white; */
+      }
+      .vis-item-ovegrflow {
+        color: white;
+      }
     </style>
   </head>
   <body>
@@ -1141,6 +1151,7 @@
               img.style.height = "24px";
               img.style.verticalAlign = "middle";
               img.style.marginRight = "5px";
+              img.style.border = "1px solid #ccc";
               container.appendChild(img);
             }
 
