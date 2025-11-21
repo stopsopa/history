@@ -15,8 +15,19 @@ const __dirname = path.dirname(__filename);
 
 const log = (function(){try{return console.log}catch(e){return function (){}}}());
 
-const host = process.env.HOST || 'localhost';
-const port = process.env.PORT || 3000;
+const host = process.env.HOST;
+if (!host) {
+    throw new Error('Environment variable HOST is missing or empty');
+}
+
+const portStr = process.env.PORT;
+if (!portStr) {
+    throw new Error('Environment variable PORT is missing');
+}
+const port = parseInt(portStr, 10);
+if (isNaN(port) || port <= 0) {
+    throw new Error(`Environment variable PORT must be a positive integer, got: ${portStr}`);
+}
 
 const web = path.resolve(__dirname);
 
