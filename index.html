@@ -7,6 +7,8 @@
     <link rel="icon" type="image/png" href="img/favicon.png">
   <script type="text/javascript" src="https://unpkg.com/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js"></script>
   <link href="https://unpkg.com/vis-timeline/styles/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+  <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
   <style type="text/css">
     #visualization {
       width: 100%;
@@ -27,12 +29,15 @@
     }
     .modal-content {
         background-color: #fefefe;
-        margin: 10% auto; 
-        padding: 20px;
+        margin: 20px auto;
+        padding: 30px;
         border: 1px solid #888;
-        width: 500px;
+        width: 90%;
+        max-width: 1200px;
         border-radius: 8px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
     }
     .close {
         color: #aaa;
@@ -99,6 +104,11 @@
             <div class="form-group">
                 <label for="title">Title:</label>
                 <input type="text" id="title" name="title" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="content">Content (Markdown):</label>
+                <textarea id="content" name="content"></textarea>
             </div>
             
             <div class="form-group">
@@ -206,6 +216,18 @@
 
     let timeline;
     let items;
+    let easyMDE;
+
+    // Initialize EasyMDE Markdown Editor
+    document.addEventListener('DOMContentLoaded', function() {
+        easyMDE = new EasyMDE({
+            element: document.getElementById('content'),
+            spellChecker: false,
+            toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|", "link", "image", "|", "preview", "side-by-side", "fullscreen", "|", "guide"],
+            status: false,
+            minHeight: "200px"
+        });
+    });
 
     // Populate day dropdowns (1-31)
     function populateDays(selectElement) {
@@ -339,6 +361,11 @@
         // Ensure checkbox is unchecked and end date is hidden
         isRangeCheckbox.checked = false;
         endGroup.classList.add('hidden');
+        
+        // Clear EasyMDE editor
+        if (easyMDE) {
+            easyMDE.value('');
+        }
     }
 
     closeBtn.onclick = function() {
@@ -439,6 +466,14 @@
         
         const formData = new FormData();
         formData.append('title', document.getElementById('title').value);
+        
+        // Get markdown content from EasyMDE
+        let markdownContent = '';
+        if (easyMDE) {
+            markdownContent = easyMDE.value();
+        }
+        formData.append('content', markdownContent);
+        
         formData.append('start', startDate);
         if (endDate) {
             formData.append('end', endDate);
@@ -520,7 +555,7 @@
                     img.style.marginRight = '5px';
                     container.appendChild(img);
                 }
-                container.appendChild(document.createTextNode(item.content));
+                container.appendChild(document.createTextNode(item.title));
                 return container;
             },
             onMove: function (item, callback) {
@@ -533,7 +568,7 @@
                 saveEvents();
             },
             onRemove: function (item, callback) {
-                if (confirm('Remove item ' + item.content + '?')) {
+                if (confirm('Remove item ' + item.title + '?')) {
                     callback(item);
                     saveEvents();
                 } else {

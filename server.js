@@ -93,7 +93,8 @@ app.post("/api/events/create", upload.single('imageFile'), async (req, res) => {
 
         const newEvent = {
             id: Date.now(),
-            content: title,
+            title: title,
+            content: req.body.content || '',
             start: start,
             end: end || undefined,
             type: type || undefined,
