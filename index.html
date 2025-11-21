@@ -688,8 +688,11 @@
         errorDiv.style.display = 'none';
         errorDiv.textContent = '';
 
-        fetch('/api/events/create', {
-            method: 'POST',
+        const url = currentEditId ? `/api/events/${currentEditId}` : '/api/events/create';
+        const method = currentEditId ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
             body: formData
         })
         .then(response => response.json())
@@ -699,6 +702,7 @@
                 modal.style.display = "none";
                 form.reset();
                 fileNameDisplay.textContent = '';
+                currentEditId = null; // Reset edit ID
                 // Reload events
                 loadEvents();
             } else {

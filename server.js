@@ -121,6 +121,84 @@ app.post("/api/events/create", upload.single('imageFile'), async (req, res) => {
     }
 });
 
+app.put("/api/events/:id", upload.single('imageFile'), async (req, res) => {
+    try {
+        const eventId = parseInt(req.params.id, 10);
+        const { title, start, end, type, imageSource, imageUrl } = req.body;
+        
+        const eventsPath = path.join(__dirname, "events.json");
+        let events = [];
+        try {
+            const data = await fs.promises.readFile(eventsPath, 'utf8');
+            events = JSON.parse(data);
+        } catch (err) {
+            return res.status(404).json({ success: false, error: "Events file not found" });
+        }
+
+        const eventIndex = events.findIndex(e => e.id === eventId);
+        if (eventIndex === -1) {
+            return res.status(404).json({ success: false, error: "Event not found" });
+        }
+
+        const existingEvent = events[eventIndex];
+        let imagePath = existingEvent.image; // Default to keeping existing image
+
+        // Handle image updates
+        if (imageSource === 'none') {
+            // Remove image if it exists
+            if (existingEvent.image && existingEvent.image.startsWith('img/')) {
+                try {
+                    await fs.promises.unlink(path.join(__dirname, existingEvent.image));
+                } catch (e) { console.log('Error deleting old image:', e.message); }
+            }
+            imagePath = undefined;
+        } else if (imageSource === 'upload' && req.file) {
+            // Delete old image if exists
+            if (existingEvent.image && existingEvent.image.startsWith('img/')) {
+                try {
+                    await fs.promises.unlink(path.join(__dirname, existingEvent.image));
+                } catch (e) { console.log('Error deleting old image:', e.message); }
+            }
+            imagePath = await processImage(req.file.buffer, start, title, __dirname);
+        } else if (imageSource === 'url' && imageUrl) {
+             // Delete old image if exists
+             if (existingEvent.image && existingEvent.image.startsWith('img/')) {
+                try {
+                    await fs.promises.unlink(path.join(__dirname, existingEvent.image));
+                } catch (e) { console.log('Error deleting old image:', e.message); }
+            }
+            try {
+                const buffer = await downloadImage(imageUrl);
+                imagePath = await processImage(buffer, start, title, __dirname);
+            } catch (err) {
+                console.error("Error downloading image:", err);
+                return res.status(400).json({ success: false, error: "Failed to download image from URL." });
+            }
+        }
+        // If imageSource === 'keep', imagePath remains as existingEvent.image
+
+        // Update event fields
+        events[eventIndex] = {
+            ...existingEvent,
+            title: title,
+            content: req.body.content || '',
+            start: start,
+            end: end || undefined,
+            type: type || undefined,
+            image: imagePath
+        };
+
+        // Save events
+        await fs.promises.writeFile(eventsPath, JSON.stringify(events, null, 2));
+
+        res.json({ success: true, event: events[eventIndex] });
+    } catch (error) {
+        console.error("Error updating event:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+
+});
+
 // Delete event endpoint
 app.delete("/api/events/:id", async (req, res) => {
     try {

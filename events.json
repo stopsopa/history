@@ -39,9 +39,10 @@
   },
   {
     "id": 1763692887971,
-    "title": "item 2",
+    "title": "item 22",
     "content": "# header\r\nlorem ipsum",
     "start": "2025-04-14",
-    "type": "point"
+    "type": "point",
+    "image": "img/2025/04/14-item_2.jpg"
   }
 ]
