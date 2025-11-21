@@ -723,7 +723,7 @@
     }
 
     function loadEvents() {
-        fetch('/events.json')
+        fetch('events.json')
             .then(response => response.json())
             .then(data => {
                 items = new vis.DataSet(data);
