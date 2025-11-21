@@ -868,8 +868,10 @@
 
         // Parse and populate start date
         if (event.start) {
+          // Convert Date object to string if needed
+          const startStr = formatDateToString(event.start);
           // Use regex to handle BC dates (negative years)
-          const startMatch = event.start.match(/^(-?\d+)-(\d+)-(\d+)/);
+          const startMatch = startStr.match(/^(-?\d+)-(\d+)-(\d+)/);
           if (startMatch) {
             document.getElementById("startYearCustom").value = startMatch[1];
             document.getElementById("startMonth").value = startMatch[2];
@@ -881,8 +883,10 @@
         if (event.end) {
           isRangeCheckbox.checked = true;
           endGroup.classList.remove("hidden");
+          // Convert Date object to string if needed
+          const endStr = formatDateToString(event.end);
           // Use regex to handle BC dates (negative years)
-          const endMatch = event.end.match(/^(-?\d+)-(\d+)-(\d+)/);
+          const endMatch = endStr.match(/^(-?\d+)-(\d+)-(\d+)/);
           if (endMatch) {
             document.getElementById("endYearCustom").value = endMatch[1];
             document.getElementById("endMonth").value = endMatch[2];
@@ -1102,16 +1106,51 @@
           });
       };
 
+      // Helper function to parse date strings including BC dates
+      function parseDateString(dateStr) {
+        if (!dateStr) return null;
+        
+        const match = dateStr.match(/^(-?\d+)-(\d+)-(\d+)/);
+        if (!match) return null;
+        
+        const year = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10) - 1; // JS months are 0-indexed
+        const day = parseInt(match[3], 10);
+        
+        // For BC dates (negative years), create a date and set the year manually
+        if (year < 0) {
+          const date = new Date(0, month, day);
+          date.setFullYear(year);
+          return date;
+        }
+        
+        // For CE dates, use standard Date constructor
+        return new Date(year, month, day);
+      }
+
       function loadEvents() {
         fetch("events.json")
           .then((response) => response.json())
           .then((data) => {
             // Preprocess events: add type="point" for events with only start date
+            // and convert date strings to Date objects for vis-timeline
             const processedData = data.map(event => {
-              if (event.start && !event.end) {
-                return { ...event, type: "point" };
+              const processed = { ...event };
+              
+              // Convert start date string to Date object
+              if (event.start) {
+                processed.start = parseDateString(event.start);
               }
-              return event;
+              
+              // Convert end date string to Date object
+              if (event.end) {
+                processed.end = parseDateString(event.end);
+              } else {
+                // Add type="point" for events with only start date
+                processed.type = "point";
+              }
+              
+              return processed;
             });
             
             items = new vis.DataSet(processedData);
@@ -1208,15 +1247,18 @@
           const durationSpan = document.getElementById("detailDuration");
 
           if (ev.start) {
-            startDateSpan.textContent = formatDateForDisplay(ev.start);
+            const startStr = formatDateToString(ev.start);
+            startDateSpan.textContent = formatDateForDisplay(startStr);
           } else {
             startDateSpan.textContent = "";
           }
 
           if (ev.end) {
-            endDateSpan.textContent = formatDateForDisplay(ev.end);
+            const endStr = formatDateToString(ev.end);
+            endDateSpan.textContent = formatDateForDisplay(endStr);
             // Calculate and display duration
-            const duration = calculateDuration(ev.start, ev.end);
+            const startStr = formatDateToString(ev.start);
+            const duration = calculateDuration(startStr, endStr);
             durationSpan.textContent = duration ? `(${duration})` : "";
           } else {
             endDateSpan.textContent = "";
@@ -1253,14 +1295,34 @@
         });
       }
 
+      // Helper function to convert Date objects back to date strings
+      function formatDateToString(date) {
+        if (!date) return null;
+        if (typeof date === 'string') return date; // Already a string
+        
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}`;
+      }
+
       function saveEvents() {
         const data = items.get();
+        
+        // Convert Date objects back to date strings for JSON storage
+        const dataToSave = data.map(event => ({
+          ...event,
+          start: formatDateToString(event.start),
+          end: event.end ? formatDateToString(event.end) : undefined
+        }));
+        
         fetch("/api/events", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify(dataToSave),
         })
           .then((response) => response.text())
           .then((data) => {
