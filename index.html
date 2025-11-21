@@ -118,9 +118,18 @@
   </div>
   <div id="visualization"></div>
 <div id="eventDetails" style="margin-top:20px; padding:15px; border:1px solid #ddd; border-radius:4px; background:#fafafa; display:none;">
-  <div style="margin-bottom:10px;">
-    <button id="detailEditBtn" style="padding:6px 12px; margin-right:8px; background:#4caf50; color:white; border:none; border-radius:4px; cursor:pointer;">Edit</button>
-    <button id="detailDeleteBtn" style="padding:6px 12px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">Delete</button>
+  <div style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:flex-start;">
+    <div style="display:flex; gap:15px; align-items:flex-start;">
+      <div id="detailDateContainer" style="display:flex; flex-direction:column; color:#666; font-size:14px;">
+        <span id="detailStartDate"></span>
+        <span id="detailEndDate"></span>
+      </div>
+      <div id="detailDuration" style="color:#888; font-size:13px; font-style:italic;"></div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="detailEditBtn" style="padding:6px 12px; background:#4caf50; color:white; border:none; border-radius:4px; cursor:pointer;">Edit</button>
+      <button id="detailDeleteBtn" style="padding:6px 12px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">Delete</button>
+    </div>
   </div>
   <h3 id="detailTitle"></h3>
   <div id="detailImageContainer" style="margin:10px 0;"></div>
@@ -268,7 +277,8 @@
   </div>
 
 
-  <script type="text/javascript">
+  <script type="module">
+    import { formatDateForDisplay, calculateDuration } from './lib/dateUtils.js';
     const container = document.getElementById('visualization');
     const addEventBtn = document.getElementById('add-event-btn');
     const modal = document.getElementById('eventModal');
@@ -827,6 +837,7 @@
             },
 
         };
+        
         // Render event details functions
         function renderEventDetails(ev) {
             if (!ev) return;
@@ -843,6 +854,28 @@
             const contentDiv = document.getElementById('detailContent');
             const markdown = ev.content || '';
             contentDiv.innerHTML = marked.parse(markdown);
+            
+            // Format and display date(s)
+            const startDateSpan = document.getElementById('detailStartDate');
+            const endDateSpan = document.getElementById('detailEndDate');
+            const durationSpan = document.getElementById('detailDuration');
+            
+            if (ev.start) {
+                startDateSpan.textContent = formatDateForDisplay(ev.start);
+            } else {
+                startDateSpan.textContent = '';
+            }
+            
+            if (ev.end) {
+                endDateSpan.textContent = formatDateForDisplay(ev.end);
+                // Calculate and display duration
+                const duration = calculateDuration(ev.start, ev.end);
+                durationSpan.textContent = duration ? `(${duration})` : '';
+            } else {
+                endDateSpan.textContent = '';
+                durationSpan.textContent = '';
+            }
+            
             document.getElementById('detailEditBtn').onclick = function() { openEditModal(ev.id); };
             document.getElementById('detailDeleteBtn').onclick = function() { openDeleteModal(ev.id); };
             document.getElementById('eventDetails').style.display = 'block';
