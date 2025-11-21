@@ -167,9 +167,30 @@
       .group-tag button:hover {
         color: #d32f2f;
       }
+      
+      /* Modifier Key Indicator */
+      #modifierIndicator {
+        position: fixed;
+        top: 3px;
+        right: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: #999;
+        transition: background-color 0.15s ease;
+        z-index: 9999;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      
+      #modifierIndicator.active {
+        background-color: #4caf50;
+      }
     </style>
   </head>
   <body>
+    <!-- Modifier Key Indicator Dot -->
+    <div id="modifierIndicator" title="Shift/Ctrl/Alt indicator"></div>
+    
     <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
       <button id="add-event-btn" style="padding: 5px 10px; cursor: pointer">
         Add Event
@@ -629,6 +650,32 @@
       let allEvents = []; // Store all events for filtering
       let selectedGroups = new Set(); // Track selected groups in the form
       let activeFilters = new Set(); // Track active filter buttons
+
+      // Modifier Key Indicator
+      const modifierIndicator = document.getElementById('modifierIndicator');
+      
+      function updateModifierIndicator(event) {
+        const isModifierPressed = event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
+        if (isModifierPressed) {
+          modifierIndicator.classList.add('active');
+        } else {
+          modifierIndicator.classList.remove('active');
+        }
+      }
+      
+      // Track modifier keys on keydown and keyup
+      document.addEventListener('keydown', updateModifierIndicator);
+      document.addEventListener('keyup', updateModifierIndicator);
+      
+      // Also track on mouse events to catch modifier keys held while clicking
+      document.addEventListener('mousemove', updateModifierIndicator);
+      document.addEventListener('mousedown', updateModifierIndicator);
+      document.addEventListener('mouseup', updateModifierIndicator);
+      
+      // Reset indicator when window loses focus
+      window.addEventListener('blur', () => {
+        modifierIndicator.classList.remove('active');
+      });
 
       // Group Management Functions
       function getAllUniqueGroups() {
