@@ -789,9 +789,11 @@
         }
 
         // Show date
-        const dateText = event.end
-          ? `${event.start} to ${event.end}`
-          : event.start;
+        const startStr = formatDateToString(event.start);
+        const endStr = event.end ? formatDateToString(event.end) : null;
+        const dateText = endStr
+          ? `${startStr} to ${endStr}`
+          : startStr;
         document.getElementById(
           "deleteEventDate"
         ).textContent = `Date: ${dateText}`;
@@ -1170,7 +1172,7 @@
           },
           editable: {
             add: false, // Disable adding via double-click
-            updateTime: true, // Allow moving items
+            updateTime: false, // Disable moving/dragging items
             updateGroup: false, // Disable group changes
             remove: false, // Disable native delete button (we use custom UI),
 
