@@ -89,6 +89,7 @@ app.post("/api/events/create", upload.single('imageFile'), async (req, res) => {
                 return res.status(400).json({ success: false, error: "Failed to download image from URL. Please check the URL and try again." });
             }
         }
+        // If imageSource === 'none', imagePath remains empty
 
         const newEvent = {
             id: Date.now(),

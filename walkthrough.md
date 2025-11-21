@@ -140,3 +140,40 @@ I have implemented a timeline UI using `vis-timeline` that allows adding, modify
 
 - ✅ Filename collision handling with counter suffix
 - ✅ Format: `DD-title.jpg`, `DD-title-1.jpg`, `DD-title-2.jpg`, etc.
+
+## Date Input Enhancements
+
+### Implementation
+
+**UI Changes:**
+
+- Replaced single text input with structured date inputs:
+  - **Year**: Text input supporting positive (CE) and negative (BCE) values
+  - **Month**: Select dropdown with all 12 months
+  - **Day**: Select dropdown with days 1-31
+- Added `autocomplete="off"` to form to prevent browser suggestions
+- Changed "Event has duration" checkbox to unchecked by default
+
+**JavaScript Logic:**
+
+- `populateDays()`: Dynamically populates day dropdowns with options 1-31
+- Default values set to today's date when modal opens
+- Form submission constructs date string: `YYYY-MM-DD` from separate inputs
+- Supports BCE dates with negative year values (e.g., `-500-03-15`)
+
+### Verification Results
+
+#### BCE Date Creation
+
+- ✅ Created event "BCE Test" with date `-500-03-15`
+- ✅ Event rendered correctly on timeline
+- ✅ Day dropdown populated with 32 options (blank + 1-31)
+- ✅ Month dropdown shows all 12 months
+- ✅ Year input accepts negative values for BCE dates
+
+#### Form Behavior
+
+- ✅ Autocomplete disabled (no browser suggestions)
+- ✅ "Event has duration" checkbox unchecked by default
+- ✅ End date fields hidden when checkbox unchecked
+- ✅ End date fields shown when checkbox checked
