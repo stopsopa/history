@@ -868,11 +868,12 @@
 
         // Parse and populate start date
         if (event.start) {
-          const startParts = event.start.split("-");
-          if (startParts.length >= 3) {
-            document.getElementById("startYearCustom").value = startParts[0];
-            document.getElementById("startMonth").value = startParts[1];
-            document.getElementById("startDay").value = startParts[2];
+          // Use regex to handle BC dates (negative years)
+          const startMatch = event.start.match(/^(-?\d+)-(\d+)-(\d+)/);
+          if (startMatch) {
+            document.getElementById("startYearCustom").value = startMatch[1];
+            document.getElementById("startMonth").value = startMatch[2];
+            document.getElementById("startDay").value = startMatch[3];
           }
         }
 
@@ -880,11 +881,12 @@
         if (event.end) {
           isRangeCheckbox.checked = true;
           endGroup.classList.remove("hidden");
-          const endParts = event.end.split("-");
-          if (endParts.length >= 3) {
-            document.getElementById("endYearCustom").value = endParts[0];
-            document.getElementById("endMonth").value = endParts[1];
-            document.getElementById("endDay").value = endParts[2];
+          // Use regex to handle BC dates (negative years)
+          const endMatch = event.end.match(/^(-?\d+)-(\d+)-(\d+)/);
+          if (endMatch) {
+            document.getElementById("endYearCustom").value = endMatch[1];
+            document.getElementById("endMonth").value = endMatch[2];
+            document.getElementById("endDay").value = endMatch[3];
           }
         } else {
           isRangeCheckbox.checked = false;
