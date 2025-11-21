@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title></title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+  <script type="text/javascript" src="node_modules/vis-timeline/dist/vis-timeline-graph2d.min.cjs"></script>
+  <link href="node_modules/vis-timeline/styles/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="node_modules/easymde/dist/easymde.min.css">
+  <script src="node_modules/easymde/dist/easymde.min.js"></script>
+
+
+  <script src="node_modules/marked/lib/marked.umd.js"></script>
+  
+  
+  
+  <style type="text/css">
+    #visualization {
+      width: 100%;
+      border: 1px solid lightgray;
+    }
+    
+    /* Modal Styles */
+    .modal {
+        display: none; 
+        position: fixed; 
+        z-index: 1000; 
+        left: 0;
+        top: 0;
+        width: 100%; 
+        height: 100%; 
+        overflow: auto; 
+        background-color: rgba(0,0,0,0.4); 
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 20px auto;
+        padding: 30px;
+        border: 1px solid #888;
+        width: 90%;
+        max-width: 1200px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="date"],
+    .form-group input[type="url"] {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .drop-zone {
+        border: 2px dashed #ccc;
+        border-radius: 4px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.3s;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+        border-color: #666;
+        background-color: #f9f9f9;
+    }
+    .hidden {
+        display: none;
+    }
+  </style>
+  </head>
+  <body>
+
+  <div style="margin-bottom: 10px;">
+      <button id="add-event-btn" style="padding: 5px 10px; cursor: pointer;">Add Event</button> 
+      <a href="https://visjs.github.io/vis-timeline/examples/timeline/">docs</a>
+  </div>
+  <div id="visualization"></div>
+<div id="eventDetails" style="margin-top:20px; padding:15px; border:1px solid #ddd; border-radius:4px; background:#fafafa; display:none;">
+  <div style="margin-bottom:10px;">
+    <button id="detailEditBtn" style="padding:6px 12px; margin-right:8px; background:#4caf50; color:white; border:none; border-radius:4px; cursor:pointer;">Edit</button>
+    <button id="detailDeleteBtn" style="padding:6px 12px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">Delete</button>
+  </div>
+  <h3 id="detailTitle"></h3>
+  <div id="detailImageContainer" style="margin:10px 0;"></div>
+  <div id="detailContent" style="white-space:pre-wrap;"></div>
+</div>
+
+
+  <!-- Add Event Modal -->
+  <div id="eventModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Add New Event</h2>
+        <form id="addEventForm" autocomplete="off">
+            <div class="form-group">
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="content">Content (Markdown):</label>
+                <textarea id="content" name="content"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="isRange" name="isRange">
+                    Event has duration (Start & End)
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>Start Date:</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="startYearCustom" placeholder="Year (e.g., 1985 or -105)" required style="flex: 2; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                    <select id="startMonth" name="startMonth" required style="flex: 1; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">-- Month --</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                    <select id="startDay" name="startDay" required style="flex: 1; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">-- Day --</option>
+                    </select>
+                </div>
+                <div id="startDateError" style="color: red; font-size: 12px; margin-top: 4px; display: none;"></div>
+            </div>
+
+            <div class="form-group hidden" id="endGroup">
+                <label>End Date:</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="endYearCustom" placeholder="Year (e.g., 1985 or -105)" style="flex: 2; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                    <select id="endMonth" name="endMonth" style="flex: 1; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">-- Month --</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                    <select id="endDay" name="endDay" style="flex: 1; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">-- Day --</option>
+                    </select>
+                </div>
+                <div id="endDateError" style="color: red; font-size: 12px; margin-top: 4px; display: none;"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Image Source:</label>
+                <div>
+                    <label><input type="radio" name="imageSource" value="none" checked> No Image</input></label>
+                    <label><input type="radio" name="imageSource" value="upload"> Upload File</label>
+                    <label><input type="radio" name="imageSource" value="url"> Image URL</label>
+                    <label id="keepImageLabel" style="display: none;"><input type="radio" name="imageSource" value="keep"> Keep previous image</label>
+                </div>
+                <div id="currentImagePreview" style="margin-top: 10px; display: none;">
+                    <p style="font-size: 0.9em; color: #666;">Current image:</p>
+                    <img id="currentImageThumb" src="" style="max-width: 150px; max-height: 100px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
+
+            <div class="form-group hidden" id="uploadGroup">
+                <div class="drop-zone" id="dropZone">
+                    <p>Drag & Drop image here or click to select</p>
+                    <input type="file" id="imageFile" name="imageFile" accept="image/*" style="display: none;">
+                    <p id="fileName" style="font-size: 0.9em; color: #666;"></p>
+                </div>
+            </div>
+
+            <div class="form-group hidden" id="urlGroup">
+                <label for="imageUrl">Image URL:</label>
+                <input type="url" id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg">
+            </div>
+
+            <div id="errorMessage" style="color: red; margin-bottom: 15px; display: none;"></div>
+
+            <button type="submit" style="padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Create Event</button>
+        </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close" id="deleteCloseBtn">&times;</span>
+        <h2>Confirm Delete</h2>
+        <p>Are you sure you want to delete this event?</p>
+        
+        <div id="deleteEventDetails" style="margin: 20px 0; padding: 15px; background-color: #f5f5f5; border-radius: 4px;">
+            <h3 id="deleteEventTitle" style="margin-top: 0;"></h3>
+            <div id="deleteEventImage" style="margin: 10px 0;"></div>
+            <div id="deleteEventContent" style="white-space: pre-wrap; color: #666;"></div>
+            <div id="deleteEventDate" style="margin-top: 10px; font-size: 0.9em; color: #888;"></div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button id="cancelDeleteBtn" style="padding: 8px 16px; background-color: #ccc; color: black; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+            <button id="confirmDeleteBtn" style="padding: 8px 16px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Remove</button>
+        </div>
+    </div>
+  </div>
+
+
+  <script type="text/javascript">
+    const container = document.getElementById('visualization');
+    const addEventBtn = document.getElementById('add-event-btn');
+    const modal = document.getElementById('eventModal');
+    const closeBtn = document.getElementsByClassName('close')[0];
+    const form = document.getElementById('addEventForm');
+    const isRangeCheckbox = document.getElementById('isRange');
+    const endGroup = document.getElementById('endGroup');
+    const imageSourceRadios = document.getElementsByName('imageSource');
+    const uploadGroup = document.getElementById('uploadGroup');
+    const urlGroup = document.getElementById('urlGroup');
+    const dropZone = document.getElementById('dropZone');
+    const imageInput = document.getElementById('imageFile');
+    const fileNameDisplay = document.getElementById('fileName');
+
+    let timeline;
+    let items;
+    let easyMDE;
+
+    // Initialize EasyMDE Markdown Editor
+    document.addEventListener('DOMContentLoaded', function() {
+        easyMDE = new EasyMDE({
+            element: document.getElementById('content'),
+            spellChecker: false,
+            toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|", "link", "image", "|", "preview", "side-by-side", "fullscreen", "|", "guide"],
+            status: false,
+            minHeight: "200px"
+        });
+    });
+
+    // Populate day dropdowns (1-31)
+    function populateDays(selectElement) {
+        selectElement.innerHTML = '<option value="">-- Day --</option>';
+        for (let i = 1; i <= 31; i++) {
+            const option = document.createElement('option');
+            option.value = String(i).padStart(2, '0');
+            option.textContent = i;
+            selectElement.appendChild(option);
+        }
+    }
+
+    populateDays(document.getElementById('startDay'));
+    populateDays(document.getElementById('endDay'));
+
+    // Date validation function
+    function validateDate(year, month, day, errorElementId) {
+        const errorDiv = document.getElementById(errorElementId);
+        
+        // Check if all fields are filled
+        if (!year || !month || !day) {
+            errorDiv.textContent = 'Please fill all date fields';
+            errorDiv.style.display = 'block';
+            return false;
+        }
+        
+        // Try to create a date object
+        try {
+            // Handle BCE dates (negative years)
+            const yearNum = parseInt(year);
+            const monthNum = parseInt(month);
+            const dayNum = parseInt(day);
+            
+            // For CE dates, use JavaScript Date object for validation
+            if (yearNum > 0) {
+                const date = new Date(yearNum, monthNum - 1, dayNum);
+                
+                // Check if the date is valid (JavaScript Date auto-corrects invalid dates)
+                if (date.getFullYear() !== yearNum || 
+                    date.getMonth() !== monthNum - 1 || 
+                    date.getDate() !== dayNum) {
+                    errorDiv.textContent = `Invalid date: ${month} does not have ${day} days in year ${year}`;
+                    errorDiv.style.display = 'block';
+                    return false;
+                }
+            } else {
+                // For BCE dates, do basic validation
+                const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+                
+                // Check for leap year (works for BCE too)
+                const absYear = Math.abs(yearNum);
+                const isLeap = (absYear % 4 === 0 && absYear % 100 !== 0) || (absYear % 400 === 0);
+                if (isLeap && monthNum === 2) {
+                    daysInMonth[1] = 29;
+                }
+                
+                if (dayNum > daysInMonth[monthNum - 1]) {
+                    errorDiv.textContent = `Invalid date: Month ${month} does not have ${day} days`;
+                    errorDiv.style.display = 'block';
+                    return false;
+                }
+            }
+            
+            errorDiv.style.display = 'none';
+            return true;
+        } catch (e) {
+            errorDiv.textContent = 'Invalid date';
+            errorDiv.style.display = 'block';
+            return false;
+        }
+    }
+
+    // Add event listeners for start date validation
+    const startYearInput = document.getElementById('startYearCustom');
+    const startMonthSelect = document.getElementById('startMonth');
+    const startDaySelect = document.getElementById('startDay');
+    
+    startYearInput.addEventListener('input', () => {
+        validateDate(startYearInput.value, startMonthSelect.value, startDaySelect.value, 'startDateError');
+    });
+    startMonthSelect.addEventListener('change', () => {
+        validateDate(startYearInput.value, startMonthSelect.value, startDaySelect.value, 'startDateError');
+    });
+    startDaySelect.addEventListener('change', () => {
+        validateDate(startYearInput.value, startMonthSelect.value, startDaySelect.value, 'startDateError');
+    });
+
+    // Add event listeners for end date validation
+    const endYearInput = document.getElementById('endYearCustom');
+    const endMonthSelect = document.getElementById('endMonth');
+    const endDaySelect = document.getElementById('endDay');
+    
+    endYearInput.addEventListener('input', () => {
+        if (isRangeCheckbox.checked) {
+            validateDate(endYearInput.value, endMonthSelect.value, endDaySelect.value, 'endDateError');
+        }
+    });
+    endMonthSelect.addEventListener('change', () => {
+        if (isRangeCheckbox.checked) {
+            validateDate(endYearInput.value, endMonthSelect.value, endDaySelect.value, 'endDateError');
+        }
+    });
+    endDaySelect.addEventListener('change', () => {
+        if (isRangeCheckbox.checked) {
+            validateDate(endYearInput.value, endMonthSelect.value, endDaySelect.value, 'endDateError');
+        }
+    });
+
+    // Modal Logic
+    addEventBtn.onclick = function() {
+        modal.style.display = "block";
+        
+        // Reset form to clear all previous values
+        form.reset();
+        
+        // Clear any error messages
+        document.getElementById('errorMessage').style.display = 'none';
+        document.getElementById('startDateError').style.display = 'none';
+        document.getElementById('endDateError').style.display = 'none';
+        
+        // Set default date to today
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        
+        document.getElementById('startYearCustom').value = year;
+        document.getElementById('startMonth').value = month;
+        document.getElementById('startDay').value = day;
+        
+        // Ensure checkbox is unchecked and end date is hidden
+        isRangeCheckbox.checked = false;
+        endGroup.classList.add('hidden');
+        
+        // Clear EasyMDE editor
+        if (easyMDE) {
+            easyMDE.value('');
+        }
+    }
+
+    // Delete Modal Functions
+    const deleteModal = document.getElementById('deleteModal');
+    const deleteCloseBtn = document.getElementById('deleteCloseBtn');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    let currentDeleteId = null;
+
+    function openDeleteModal(eventId) {
+        const event = items.get(eventId);
+        if (!event) return;
+        
+        currentDeleteId = eventId;
+        
+        // Populate delete modal with event details
+        document.getElementById('deleteEventTitle').textContent = event.title;
+        document.getElementById('deleteEventContent').textContent = event.content || 'No description';
+        
+        // Show image if exists
+        const imageDiv = document.getElementById('deleteEventImage');
+        imageDiv.innerHTML = '';
+        if (event.image) {
+            const img = document.createElement('img');
+            img.src = event.image;
+            img.style.maxWidth = '200px';
+            img.style.maxHeight = '150px';
+            img.style.borderRadius = '4px';
+            imageDiv.appendChild(img);
+        }
+        
+        // Show date
+        const dateText = event.end ? `${event.start} to ${event.end}` : event.start;
+        document.getElementById('deleteEventDate').textContent = `Date: ${dateText}`;
+        
+        deleteModal.style.display = 'block';
+    }
+
+    deleteCloseBtn.onclick = function() {
+        deleteModal.style.display = 'none';
+        currentDeleteId = null;
+    }
+
+    cancelDeleteBtn.onclick = function() {
+        deleteModal.style.display = 'none';
+        currentDeleteId = null;
+    }
+
+    confirmDeleteBtn.onclick = function() {
+        if (!currentDeleteId) return;
+        
+        // If called from vis-timeline native button, use the callback
+        if (window.pendingDeleteCallback) {
+            window.pendingDeleteCallback(window.pendingDeleteItem);
+            window.pendingDeleteCallback = null;
+            window.pendingDeleteItem = null;
+            deleteModal.style.display = 'none';
+            currentDeleteId = null;
+            saveEvents();
+        } else {
+            // If called from custom button (fallback), use fetch
+            fetch(`/api/events/${currentDeleteId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    deleteModal.style.display = 'none';
+                    currentDeleteId = null;
+                    loadEvents(); // Reload timeline
+                } else {
+                    alert('Error deleting event: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting event');
+            });
+        }
+    }
+
+    // Edit Modal Functions
+    let currentEditId = null;
+
+    function openEditModal(eventId) {
+        const event = items.get(eventId);
+        if (!event) return;
+        
+        currentEditId = eventId;
+        
+        // Change modal title
+        document.querySelector('#eventModal h2').textContent = 'Edit Event';
+        document.querySelector('button[type="submit"]').textContent = 'Update Event';
+        
+        // Populate title
+        document.getElementById('title').value = event.title || '';
+        
+        // Populate content in EasyMDE
+        if (easyMDE) {
+            easyMDE.value(event.content || '');
+        }
+        
+        // Parse and populate start date
+        if (event.start) {
+            const startParts = event.start.split('-');
+            if (startParts.length >= 3) {
+                document.getElementById('startYearCustom').value = startParts[0];
+                document.getElementById('startMonth').value = startParts[1];
+                document.getElementById('startDay').value = startParts[2];
+            }
+        }
+        
+        // Handle end date if exists
+        if (event.end) {
+            isRangeCheckbox.checked = true;
+            endGroup.classList.remove('hidden');
+            const endParts = event.end.split('-');
+            if (endParts.length >= 3) {
+                document.getElementById('endYearCustom').value = endParts[0];
+                document.getElementById('endMonth').value = endParts[1];
+                document.getElementById('endDay').value = endParts[2];
+            }
+        } else {
+            isRangeCheckbox.checked = false;
+            endGroup.classList.add('hidden');
+        }
+        
+        // Handle image options
+        const keepImageLabel = document.getElementById('keepImageLabel');
+        const currentImagePreview = document.getElementById('currentImagePreview');
+        const currentImageThumb = document.getElementById('currentImageThumb');
+        
+        if (event.image) {
+            // Show "Keep previous image" option
+            keepImageLabel.style.display = 'inline';
+            currentImagePreview.style.display = 'block';
+            currentImageThumb.src = event.image;
+            
+            // Select "Keep previous image" by default
+            document.querySelector('input[name="imageSource"][value="keep"]').checked = true;
+            uploadGroup.classList.add('hidden');
+            urlGroup.classList.add('hidden');
+        } else {
+            // No existing image, hide "Keep previous image" option
+            keepImageLabel.style.display = 'none';
+            currentImagePreview.style.display = 'none';
+            
+            // Select "No Image" by default
+            document.querySelector('input[name="imageSource"][value="none"]').checked = true;
+            uploadGroup.classList.add('hidden');
+            urlGroup.classList.add('hidden');
+        }
+        
+        modal.style.display = 'block';
+    }
+
+    closeBtn.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    // Toggle end date visibility and copy start date values
+    isRangeCheckbox.onchange = function() {
+        if (this.checked) {
+            endGroup.classList.remove('hidden');
+            // Copy start date values to end date
+            document.getElementById('endYearCustom').value = document.getElementById('startYearCustom').value;
+            document.getElementById('endMonth').value = document.getElementById('startMonth').value;
+            document.getElementById('endDay').value = document.getElementById('startDay').value;
+        } else {
+            endGroup.classList.add('hidden');
+        }
+    }
+
+    imageSourceRadios.forEach(radio => {
+        radio.onchange = function() {
+            if (this.value === 'upload') {
+                uploadGroup.classList.remove('hidden');
+                urlGroup.classList.add('hidden');
+            } else if (this.value === 'url') {
+                uploadGroup.classList.add('hidden');
+                urlGroup.classList.remove('hidden');
+            } else {
+                uploadGroup.classList.add('hidden');
+                urlGroup.classList.add('hidden');
+            }
+        }
+    });
+
+    // Drag & Drop
+    dropZone.onclick = () => imageInput.click();
+
+    imageInput.onchange = function() {
+        if (this.files.length > 0) {
+            fileNameDisplay.textContent = this.files[0].name;
+        }
+    }
+
+    dropZone.ondragover = function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    }
+
+    dropZone.ondragleave = function() {
+        this.classList.remove('dragover');
+    }
+
+    dropZone.ondrop = function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            imageInput.files = e.dataTransfer.files;
+            fileNameDisplay.textContent = e.dataTransfer.files[0].name;
+        }
+    }
+
+    // Form Submission
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        
+        // Construct start date from inputs
+        const startYear = document.getElementById('startYearCustom').value;
+        const startMonth = document.getElementById('startMonth').value;
+        const startDay = document.getElementById('startDay').value;
+        
+        // Validate start date
+        if (!validateDate(startYear, startMonth, startDay, 'startDateError')) {
+            return; // Don't submit if start date is invalid
+        }
+        
+        const startDate = `${startYear}-${startMonth}-${startDay}`;
+        
+        // Construct end date if range is checked
+        let endDate = null;
+        if (isRangeCheckbox.checked) {
+            const endYear = document.getElementById('endYearCustom').value;
+            const endMonth = document.getElementById('endMonth').value;
+            const endDay = document.getElementById('endDay').value;
+            if (endYear && endMonth && endDay) {
+                // Validate end date
+                if (!validateDate(endYear, endMonth, endDay, 'endDateError')) {
+                    return; // Don't submit if end date is invalid
+                }
+                endDate = `${endYear}-${endMonth}-${endDay}`;
+            }
+        }
+        
+        const formData = new FormData();
+        formData.append('title', document.getElementById('title').value);
+        
+        // Get markdown content from EasyMDE
+        let markdownContent = '';
+        if (easyMDE) {
+            markdownContent = easyMDE.value();
+        }
+        formData.append('content', markdownContent);
+        
+        formData.append('start', startDate);
+        if (endDate) {
+            formData.append('end', endDate);
+        }
+        formData.append('type', isRangeCheckbox.checked ? 'range' : 'point');
+        
+        const imageSource = document.querySelector('input[name="imageSource"]:checked').value;
+        formData.append('imageSource', imageSource);
+        
+        if (imageSource === 'upload') {
+            const fileInput = document.getElementById('imageFile');
+            if (fileInput.files[0]) {
+                formData.append('imageFile', fileInput.files[0]);
+            }
+        } else if (imageSource === 'url') {
+            formData.append('imageUrl', document.getElementById('imageUrl').value);
+        }
+        
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+
+        const url = currentEditId ? `/api/events/${currentEditId}` : '/api/events/create';
+        const method = currentEditId ? 'PUT' : 'POST';
+
+        fetch(url, {
+            method: method,
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Success:', data);
+                modal.style.display = "none";
+                form.reset();
+                fileNameDisplay.textContent = '';
+                currentEditId = null; // Reset edit ID
+                // Reload events
+                loadEvents();
+            } else {
+                errorDiv.textContent = 'Error: ' + data.error;
+                errorDiv.style.display = 'block';
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            errorDiv.textContent = 'Network or Server Error';
+            errorDiv.style.display = 'block';
+        });
+    }
+
+    function loadEvents() {
+        fetch('/events.json')
+            .then(response => response.json())
+            .then(data => {
+                items = new vis.DataSet(data);
+                if (timeline) {
+                    timeline.setItems(items);
+                } else {
+                    createTimeline();
+                }
+            });
+    }
+
+    function createTimeline() {
+        const options = {
+            editable: {
+                add: false,         // Disable adding via double-click
+                updateTime: true,   // Allow moving items
+                updateGroup: false, // Disable group changes
+                remove: false,      // Disable native delete button (we use custom UI),
+
+                overrideItems: false
+            },
+            template: function (item, element, data) {
+                const container = document.createElement('span');
+                container.style.display = 'flex';
+                container.style.alignItems = 'center';
+                container.style.gap = '5px';
+                
+                if (item.image) {
+                    const img = document.createElement('img');
+                    // Try thumbnail first, fallback to original
+                    const thumbPath = item.image.replace('img/', 'thumb/');
+                    img.src = thumbPath;
+                    img.onerror = function() {
+                        this.onerror = null;
+                        this.src = item.image;
+                    };
+                    
+                    img.style.width = '24px';
+                    img.style.height = '24px';
+                    img.style.verticalAlign = 'middle';
+                    img.style.marginRight = '5px';
+                    container.appendChild(img);
+                }
+                
+                const textSpan = document.createElement('span');
+                textSpan.textContent = item.title;
+                textSpan.style.flex = '1';
+                container.appendChild(textSpan);
+                
+
+                
+                return container;
+            },
+            onMove: function (item, callback) {
+                callback(item);
+                saveEvents();
+            },
+            onUpdate: function (item, callback) {
+                // Simplified update for now - just save position changes
+                callback(item);
+                saveEvents();
+            },
+            onRemove: function (item, callback) {
+                // Store the callback to use after confirmation
+                window.pendingDeleteCallback = callback;
+                window.pendingDeleteItem = item;
+                openDeleteModal(item.id);
+            },
+
+        };
+        // Render event details functions
+        function renderEventDetails(ev) {
+            if (!ev) return;
+            document.getElementById('detailTitle').textContent = ev.title || '';
+            const imgDiv = document.getElementById('detailImageContainer');
+            imgDiv.innerHTML = '';
+            if (ev.image) {
+                const img = document.createElement('img');
+                img.src = ev.image;
+                img.style.maxWidth = '300px';
+                img.style.borderRadius = '4px';
+                imgDiv.appendChild(img);
+            }
+            const contentDiv = document.getElementById('detailContent');
+            const markdown = ev.content || '';
+            contentDiv.innerHTML = marked.parse(markdown);
+            document.getElementById('detailEditBtn').onclick = function() { openEditModal(ev.id); };
+            document.getElementById('detailDeleteBtn').onclick = function() { openDeleteModal(ev.id); };
+            document.getElementById('eventDetails').style.display = 'block';
+        }
+        function clearEventDetails() {
+            document.getElementById('eventDetails').style.display = 'none';
+        }
+        timeline = new vis.Timeline(container, items, options);
+        // Add double-click listener to open edit modal
+        timeline.on('doubleClick', function (properties) {
+            if (properties.item) {
+                openEditModal(properties.item);
+            }
+        });
+        
+        // Add select listener to show event details
+        timeline.on('select', function (properties) {
+            if (properties.items && properties.items.length) {
+                const ev = items.get(properties.items[0]);
+                renderEventDetails(ev);
+            } else {
+                clearEventDetails();
+            }
+        });
+    }
+
+    function saveEvents() {
+        const data = items.get();
+        fetch('/api/events', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => response.text())
+        .then(data => {
+            console.log('Success:', data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+
+    // Initial Load
+    loadEvents();
+  </script>
+</html>
