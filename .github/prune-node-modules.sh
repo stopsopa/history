@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
+
+
+# Call like:
+# /bin/bash .github/prune-node-modules.sh node_modules/vis-timeline/dist node_modules/vis-timeline/styles node_modules/easymde/dist
+# 
+# This script will:
+# 1. Create a temporary directory
+# 2. Move specified directories to temporary location
+# 3. Clean node_modules completely
+# 4. Restore moved directories
+# 5. Remove temporary directory 
+
 set -euo pipefail
 
 SCRIPT_NAME=".github/prune-node-modules.sh"
