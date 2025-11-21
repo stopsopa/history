@@ -13,6 +13,73 @@
       height: 400px;
       border: 1px solid lightgray;
     }
+    
+    /* Modal Styles */
+    .modal {
+        display: none; 
+        position: fixed; 
+        z-index: 1000; 
+        left: 0;
+        top: 0;
+        width: 100%; 
+        height: 100%; 
+        overflow: auto; 
+        background-color: rgba(0,0,0,0.4); 
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto; 
+        padding: 20px;
+        border: 1px solid #888;
+        width: 500px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="date"],
+    .form-group input[type="url"] {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    .drop-zone {
+        border: 2px dashed #ccc;
+        border-radius: 4px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.3s;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+        border-color: #666;
+        background-color: #f9f9f9;
+    }
+    .hidden {
+        display: none;
+    }
   </style>
   </head>
   <body>
@@ -23,11 +90,242 @@
   </div>
   <div id="visualization"></div>
 
+  <!-- Add Event Modal -->
+  <div id="eventModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Add New Event</h2>
+        <form id="addEventForm">
+            <div class="form-group">
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="isRange" name="isRange" checked>
+                    Event has duration (Start & End)
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="start">Start Date:</label>
+                <input type="date" id="start" name="start" required>
+            </div>
+
+            <div class="form-group hidden" id="endGroup">
+                <label for="end">End Date:</label>
+                <input type="date" id="end" name="end">
+            </div>
+
+            <div class="form-group">
+                <label>Image Source:</label>
+                <div>
+                    <label><input type="radio" name="imageSource" value="upload" checked> Upload File</label>
+                    <label><input type="radio" name="imageSource" value="url"> Image URL</label>
+                </div>
+            </div>
+
+            <div class="form-group" id="uploadGroup">
+                <div class="drop-zone" id="dropZone">
+                    <p>Drag & Drop image here or click to select</p>
+                    <input type="file" id="imageFile" name="imageFile" accept="image/*" style="display: none;">
+                    <p id="fileName" style="font-size: 0.9em; color: #666;"></p>
+                </div>
+            </div>
+
+            <div class="form-group hidden" id="urlGroup">
+                <label for="imageUrl">Image URL:</label>
+                <input type="url" id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg">
+            </div>
+
+            <div id="errorMessage" style="color: red; margin-bottom: 15px; display: none;"></div>
+
+            <button type="submit" style="padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">Create Event</button>
+        </form>
+    </div>
+  </div>
+
   <script type="text/javascript">
     const container = document.getElementById('visualization');
     const addEventBtn = document.getElementById('add-event-btn');
+    const modal = document.getElementById('eventModal');
+    const closeBtn = document.getElementsByClassName('close')[0];
+    const form = document.getElementById('addEventForm');
+    const isRangeCheckbox = document.getElementById('isRange');
+    const endGroup = document.getElementById('endGroup');
+    const imageSourceRadios = document.getElementsByName('imageSource');
+    const uploadGroup = document.getElementById('uploadGroup');
+    const urlGroup = document.getElementById('urlGroup');
+    const dropZone = document.getElementById('dropZone');
+    const imageInput = document.getElementById('imageFile');
+    const fileNameDisplay = document.getElementById('fileName');
+
     let timeline;
     let items;
+
+    // Modal Logic
+    addEventBtn.onclick = function() {
+        modal.style.display = "block";
+        // Set default date to today
+        document.getElementById('start').valueAsDate = new Date();
+    }
+
+    closeBtn.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    // Form Interactions
+    isRangeCheckbox.onchange = function() {
+        if (this.checked) {
+            endGroup.classList.remove('hidden');
+        } else {
+            endGroup.classList.add('hidden');
+        }
+    }
+
+    imageSourceRadios.forEach(radio => {
+        radio.onchange = function() {
+            if (this.value === 'upload') {
+                uploadGroup.classList.remove('hidden');
+                urlGroup.classList.add('hidden');
+            } else {
+                uploadGroup.classList.add('hidden');
+                urlGroup.classList.remove('hidden');
+            }
+        }
+    });
+
+    // Drag & Drop
+    dropZone.onclick = () => imageInput.click();
+
+    imageInput.onchange = function() {
+        if (this.files.length > 0) {
+            fileNameDisplay.textContent = this.files[0].name;
+        }
+    }
+
+    dropZone.ondragover = function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    }
+
+    dropZone.ondragleave = function() {
+        this.classList.remove('dragover');
+    }
+
+    dropZone.ondrop = function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            imageInput.files = e.dataTransfer.files;
+            fileNameDisplay.textContent = e.dataTransfer.files[0].name;
+        }
+    }
+
+    // Form Submission
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+        
+        // Adjust type based on range
+        if (!isRangeCheckbox.checked) {
+            formData.append('type', 'point');
+            formData.delete('end');
+        }
+
+        fetch('/api/events/create', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Success:', data);
+                modal.style.display = "none";
+                form.reset();
+                fileNameDisplay.textContent = '';
+                // Reload events
+                loadEvents();
+            } else {
+                errorDiv.textContent = 'Error: ' + data.error;
+                errorDiv.style.display = 'block';
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            errorDiv.textContent = 'Network or Server Error';
+            errorDiv.style.display = 'block';
+        });
+    }
+
+    function loadEvents() {
+        fetch('/events.json')
+            .then(response => response.json())
+            .then(data => {
+                items = new vis.DataSet(data);
+                if (timeline) {
+                    timeline.setItems(items);
+                } else {
+                    createTimeline();
+                }
+            });
+    }
+
+    function createTimeline() {
+        const options = {
+            editable: true,
+            template: function (item, element, data) {
+                const container = document.createElement('span');
+                if (item.image) {
+                    const img = document.createElement('img');
+                    // Try thumbnail first, fallback to original
+                    const thumbPath = item.image.replace('img/', 'thumb/');
+                    img.src = thumbPath;
+                    img.onerror = function() {
+                        this.onerror = null;
+                        this.src = item.image;
+                    };
+                    
+                    img.style.width = '24px';
+                    img.style.height = '24px';
+                    img.style.verticalAlign = 'middle';
+                    img.style.marginRight = '5px';
+                    container.appendChild(img);
+                }
+                container.appendChild(document.createTextNode(item.content));
+                return container;
+            },
+            onMove: function (item, callback) {
+                callback(item);
+                saveEvents();
+            },
+            onUpdate: function (item, callback) {
+                // Simplified update for now - just save position changes
+                callback(item);
+                saveEvents();
+            },
+            onRemove: function (item, callback) {
+                if (confirm('Remove item ' + item.content + '?')) {
+                    callback(item);
+                    saveEvents();
+                } else {
+                    callback(null);
+                }
+            }
+        };
+
+        timeline = new vis.Timeline(container, items, options);
+    }
 
     function saveEvents() {
         const data = items.get();
@@ -47,76 +345,7 @@
         });
     }
 
-    addEventBtn.addEventListener('click', () => {
-        const content = prompt('Enter text content for new item:');
-        if (content != null) {
-            const newItem = {
-                id: Date.now(),
-                content: content,
-                start: new Date().toISOString().slice(0, 10), // YYYY-MM-DD
-                image: 'img/flag.png'
-            };
-            items.add(newItem);
-            saveEvents();
-            timeline.setWindow(newItem.start, new Date(new Date(newItem.start).getTime() + 1000 * 60 * 60 * 24 * 2)); // Focus on new item
-        }
-    });
-
-    fetch('/events.json')
-        .then(response => response.json())
-        .then(data => {
-            items = new vis.DataSet(data);
-
-            const options = {
-                editable: true,
-                template: function (item, element, data) {
-                    const container = document.createElement('span');
-                    if (item.image) {
-                        const img = document.createElement('img');
-                        img.src = item.image;
-                        img.style.width = '24px';
-                        img.style.height = '24px';
-                        img.style.verticalAlign = 'middle';
-                        img.style.marginRight = '5px';
-                        container.appendChild(img);
-                    }
-                    container.appendChild(document.createTextNode(item.content));
-                    return container;
-                },
-                onAdd: function (item, callback) {
-                    item.content = prompt('Enter text content for new item:', item.content);
-                    item.image = 'img/flag.png';
-                    if (item.content != null) {
-                        callback(item);
-                        saveEvents();
-                    } else {
-                        callback(null);
-                    }
-                },
-                onMove: function (item, callback) {
-                    callback(item);
-                    saveEvents();
-                },
-                onUpdate: function (item, callback) {
-                    item.content = prompt('Edit items text:', item.content);
-                    if (item.content != null) {
-                        callback(item);
-                        saveEvents();
-                    } else {
-                        callback(null);
-                    }
-                },
-                onRemove: function (item, callback) {
-                    if (confirm('Remove item ' + item.content + '?')) {
-                        callback(item);
-                        saveEvents();
-                    } else {
-                        callback(null);
-                    }
-                }
-            };
-
-            timeline = new vis.Timeline(container, items, options);
-        });
+    // Initial Load
+    loadEvents();
   </script>
 </html>

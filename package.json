@@ -5,8 +5,8 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node --env-file=.env server.js",
-    "dev": "node --env-file=.env server.js"
+    "start": "node --watch --env-file=.env server.js",
+    "regenerate-thumbnails": "node scripts/regenerate_thumbnails.js"
   },
   "keywords": [
     "wysiwyg",
@@ -17,7 +17,9 @@
   "dependencies": {
     "cookie-parser": "^1.4.7",
     "express": "^4.18.2",
+    "multer": "^2.0.2",
     "serve-index": "^1.9.1",
+    "sharp": "^0.34.5",
     "vis-timeline": "^8.4.0"
   }
 }

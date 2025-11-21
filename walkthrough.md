@@ -51,3 +51,12 @@ I have implemented a timeline UI using `vis-timeline` that allows adding, modify
   - Verified that events are rendered with images on the left side of the text.
   - Confirmed that the correct image path (e.g., `img/user.png`) is used for specific items.
   - Validated visually via screenshot and DOM inspection (confirmed `src` attribute is present and correct).
+
+### Conditional Image Rendering Verification
+
+- **Requirement**: Events without an `image` property should render only text, no default image.
+- **Implementation**: Updated template to conditionally append the `<img>` element only if `item.image` exists.
+- **Verification**:
+  - Removed `image` property from "item 3" in `events.json`.
+  - Verified via browser that "item 3" renders as `<span>item 3</span>` (no `<img>` tag).
+  - Verified that other items (e.g., "item 2") still render with their images.
