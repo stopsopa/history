@@ -51,7 +51,9 @@ jobs:
         run: npm run thumb
 
       - name: Prune node modules
-        run: /bin/bash .github/prune-node-modules.sh node_modules/vis-timeline/dist node_modules/vis-timeline/styles node_modules/easymde/dist
+        run: |
+          /bin/bash .github/prune-node-modules.sh node_modules/vis-timeline/dist node_modules/vis-timeline/styles node_modules/easymde/dist
+          ls -la node_modules
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3.0.1
