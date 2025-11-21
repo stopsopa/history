@@ -53,11 +53,10 @@ jobs:
       - name: Prune node modules
         run: /bin/bash .github/prune-node-modules.sh node_modules/vis-timeline/dist node_modules/vis-timeline/styles node_modules/easymde/dist
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3.0.1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
+          path: .
 
   # Deployment job
   github-pages:
