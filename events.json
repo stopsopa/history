@@ -28,7 +28,6 @@
     "id": 6,
     "title": "item 6",
     "start": "2025-04-27",
-    "type": "point",
     "image": "img/clock.png"
   },
   {
@@ -42,7 +41,6 @@
     "title": "item 22",
     "content": "# header\r\nlorem ipsum",
     "start": "2025-04-14",
-    "type": "point",
     "image": "img/2025/04/14-item_2.jpg"
   }
 ]

@@ -1032,7 +1032,7 @@
         if (endDate) {
           formData.append("end", endDate);
         }
-        formData.append("type", isRangeCheckbox.checked ? "range" : "point");
+        // Don't send type - it will be auto-added in UI based on presence of end date
 
         const imageSource = document.querySelector(
           'input[name="imageSource"]:checked'
@@ -1090,7 +1090,15 @@
         fetch("events.json")
           .then((response) => response.json())
           .then((data) => {
-            items = new vis.DataSet(data);
+            // Preprocess events: add type="point" for events with only start date
+            const processedData = data.map(event => {
+              if (event.start && !event.end) {
+                return { ...event, type: "point" };
+              }
+              return event;
+            });
+            
+            items = new vis.DataSet(processedData);
             if (timeline) {
               timeline.setItems(items);
             } else {
