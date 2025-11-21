@@ -5,7 +5,10 @@
     "content": "",
     "start": "1643-12-25",
     "end": "1727-03-20",
-    "image": "img/1643/12/24-isaac_newton.jpg"
+    "image": "img/1643/12/24-isaac_newton.jpg",
+    "group": [
+      "people"
+    ]
   },
   {
     "id": 1763739094473,
@@ -21,6 +24,9 @@
     "content": "",
     "start": "-27-01-01",
     "end": "476-01-01",
-    "image": "img/-27/01/01-roman_empire.jpg"
+    "image": "img/-27/01/01-roman_empire.jpg",
+    "group": [
+      "civilisations"
+    ]
   }
 ]

@@ -127,14 +127,57 @@
       .vis-item-ovegrflow {
         color: white;
       }
+      .group-filter-btn {
+        padding: 6px 12px;
+        background: #e0e0e0;
+        color: #333;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s;
+      }
+      .group-filter-btn:hover {
+        background: #d0d0d0;
+      }
+      .group-filter-btn.active {
+        background: #2196F3;
+        color: white;
+        border-color: #1976D2;
+      }
+      .group-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 8px;
+        background: #e3f2fd;
+        color: #1976D2;
+        border-radius: 3px;
+        font-size: 12px;
+      }
+      .group-tag button {
+        background: none;
+        border: none;
+        color: #1976D2;
+        cursor: pointer;
+        padding: 0;
+        font-size: 14px;
+        line-height: 1;
+      }
+      .group-tag button:hover {
+        color: #d32f2f;
+      }
     </style>
   </head>
   <body>
-    <div style="margin-bottom: 10px">
+    <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
       <button id="add-event-btn" style="padding: 5px 10px; cursor: pointer">
         Add Event
       </button>
       <a href="https://visjs.github.io/vis-timeline/examples/timeline/">docs</a>
+      <div id="groupFilters" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+        <!-- Group filter buttons will be dynamically added here -->
+      </div>
     </div>
     <div id="visualization"></div>
     <div
@@ -222,6 +265,34 @@
           <div class="form-group">
             <label for="content">Content (Markdown):</label>
             <textarea id="content" name="content"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label style="font-weight: bold; margin-bottom: 8px; display: block">Groups:</label>
+            <div id="existingGroupsContainer" style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px;">
+              <!-- Existing groups will be populated here as checkboxes -->
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input 
+                type="text" 
+                id="newGroupInput" 
+                placeholder="Create new group (e.g., Science, History)" 
+                style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
+              />
+              <button 
+                type="button" 
+                id="addGroupBtn"
+                style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap;"
+              >
+                Add Group
+              </button>
+            </div>
+            <div id="selectedGroupsDisplay" style="margin-top: 10px; display: none;">
+              <small style="color: #666;">Selected groups:</small>
+              <div id="selectedGroupsList" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                <!-- Selected groups will appear here as tags -->
+              </div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -555,6 +626,215 @@
       let timeline;
       let items;
       let easyMDE;
+      let allEvents = []; // Store all events for filtering
+      let selectedGroups = new Set(); // Track selected groups in the form
+      let activeFilters = new Set(); // Track active filter buttons
+
+      // Group Management Functions
+      function getAllUniqueGroups() {
+        const groupsSet = new Set();
+        allEvents.forEach(event => {
+          if (event.group && Array.isArray(event.group)) {
+            event.group.forEach(g => groupsSet.add(g));
+          }
+        });
+        return Array.from(groupsSet).sort();
+      }
+
+      function renderGroupCheckboxes() {
+        const container = document.getElementById('existingGroupsContainer');
+        const uniqueGroups = getAllUniqueGroups();
+        
+        container.innerHTML = '';
+        
+        if (uniqueGroups.length === 0) {
+          container.innerHTML = '<small style="color: #999;">No groups yet. Create one below.</small>';
+          return;
+        }
+        
+        uniqueGroups.forEach(group => {
+          const label = document.createElement('label');
+          label.style.display = 'flex';
+          label.style.alignItems = 'center';
+          label.style.gap = '4px';
+          label.style.cursor = 'pointer';
+          
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.value = group;
+          checkbox.checked = selectedGroups.has(group);
+          checkbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+              selectedGroups.add(group);
+            } else {
+              selectedGroups.delete(group);
+            }
+            updateSelectedGroupsDisplay();
+          });
+          
+          label.appendChild(checkbox);
+          label.appendChild(document.createTextNode(group));
+          container.appendChild(label);
+        });
+      }
+
+      function updateSelectedGroupsDisplay() {
+        const display = document.getElementById('selectedGroupsDisplay');
+        const list = document.getElementById('selectedGroupsList');
+        
+        if (selectedGroups.size === 0) {
+          display.style.display = 'none';
+          return;
+        }
+        
+        display.style.display = 'block';
+        list.innerHTML = '';
+        
+        selectedGroups.forEach(group => {
+          const tag = document.createElement('div');
+          tag.className = 'group-tag';
+          tag.innerHTML = `
+            <span>${group}</span>
+            <button type="button" data-group="${group}">×</button>
+          `;
+          tag.querySelector('button').addEventListener('click', () => {
+            selectedGroups.delete(group);
+            renderGroupCheckboxes();
+            updateSelectedGroupsDisplay();
+          });
+          list.appendChild(tag);
+        });
+      }
+
+      // Add group button handler
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('addGroupBtn').addEventListener('click', () => {
+          const input = document.getElementById('newGroupInput');
+          const groupName = input.value.trim();
+          
+          if (groupName) {
+            selectedGroups.add(groupName);
+            input.value = '';
+            renderGroupCheckboxes();
+            updateSelectedGroupsDisplay();
+          }
+        });
+        
+        // Allow Enter key to add group
+        document.getElementById('newGroupInput').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('addGroupBtn').click();
+          }
+        });
+      });
+
+      function renderGroupFilters() {
+        const container = document.getElementById('groupFilters');
+        const uniqueGroups = getAllUniqueGroups();
+        
+        container.innerHTML = '';
+        
+        if (uniqueGroups.length === 0 && allEvents.every(e => !e.group || e.group.length === 0)) {
+          return; // No groups and no ungrouped events, don't show filters
+        }
+        
+        // Add "No Group" button if there are events without groups
+        const hasUngrouped = allEvents.some(e => !e.group || e.group.length === 0);
+        if (hasUngrouped) {
+          const noGroupBtn = document.createElement('button');
+          noGroupBtn.className = 'group-filter-btn';
+          noGroupBtn.textContent = 'No Group';
+          noGroupBtn.dataset.group = '__NO_GROUP__';
+          noGroupBtn.addEventListener('click', () => toggleFilter('__NO_GROUP__'));
+          container.appendChild(noGroupBtn);
+        }
+        
+        // Add button for each group
+        uniqueGroups.forEach(group => {
+          const btn = document.createElement('button');
+          btn.className = 'group-filter-btn';
+          btn.textContent = group;
+          btn.dataset.group = group;
+          btn.addEventListener('click', () => toggleFilter(group));
+          container.appendChild(btn);
+        });
+      }
+
+      function toggleFilter(group) {
+        if (activeFilters.has(group)) {
+          activeFilters.delete(group);
+        } else {
+          activeFilters.add(group);
+        }
+        
+        // Update button states
+        document.querySelectorAll('.group-filter-btn').forEach(btn => {
+          if (activeFilters.has(btn.dataset.group)) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+        
+        applyFilters();
+      }
+
+      function applyFilters() {
+        if (!timeline || !items) return;
+        
+        // If no filters active, show all events
+        if (activeFilters.size === 0) {
+          const allItems = allEvents.map(event => {
+            const processed = { ...event };
+            if (event.start) {
+              processed.start = parseDateString(event.start);
+            }
+            if (event.end) {
+              processed.end = parseDateString(event.end);
+            } else {
+              processed.type = "point";
+            }
+            return processed;
+          });
+          items.clear();
+          items.add(allItems);
+          return;
+        }
+        
+        // Filter events based on active filters
+        const filteredEvents = allEvents.filter(event => {
+          // Check if "No Group" filter is active
+          if (activeFilters.has('__NO_GROUP__')) {
+            if (!event.group || event.group.length === 0) {
+              return true;
+            }
+          }
+          
+          // Check if event has any of the active group filters
+          if (event.group && Array.isArray(event.group)) {
+            return event.group.some(g => activeFilters.has(g));
+          }
+          
+          return false;
+        });
+        
+        const processedFiltered = filteredEvents.map(event => {
+          const processed = { ...event };
+          if (event.start) {
+            processed.start = parseDateString(event.start);
+          }
+          if (event.end) {
+            processed.end = parseDateString(event.end);
+          } else {
+            processed.type = "point";
+          }
+          return processed;
+        });
+        
+        items.clear();
+        items.add(processedFiltered);
+      }
 
       // Initialize EasyMDE Markdown Editor
       document.addEventListener("DOMContentLoaded", function () {
@@ -730,8 +1010,18 @@
       addEventBtn.onclick = function () {
         modal.style.display = "block";
 
+        // Reset modal title for adding new event
+        document.querySelector("#eventModal h2").textContent = "Add New Event";
+        document.querySelector('button[type="submit"]').textContent = "Create Event";
+        currentEditId = null;
+
         // Reset form to clear all previous values
         form.reset();
+
+        // Clear selected groups
+        selectedGroups.clear();
+        renderGroupCheckboxes();
+        updateSelectedGroupsDisplay();
 
         // Clear any error messages
         document.getElementById("errorMessage").style.display = "none";
@@ -867,6 +1157,15 @@
         if (easyMDE) {
           easyMDE.value(event.content || "");
         }
+
+        // Populate groups
+        selectedGroups.clear();
+        const rawEvent = allEvents.find(e => e.id === eventId);
+        if (rawEvent && rawEvent.group && Array.isArray(rawEvent.group)) {
+          rawEvent.group.forEach(g => selectedGroups.add(g));
+        }
+        renderGroupCheckboxes();
+        updateSelectedGroupsDisplay();
 
         // Parse and populate start date
         if (event.start) {
@@ -1050,6 +1349,11 @@
         }
         formData.append("content", markdownContent);
 
+        // Add groups if any selected
+        if (selectedGroups.size > 0) {
+          formData.append("group", JSON.stringify(Array.from(selectedGroups)));
+        }
+
         formData.append("start", startDate);
         if (endDate) {
           formData.append("end", endDate);
@@ -1134,6 +1438,13 @@
         fetch("events.json")
           .then((response) => response.json())
           .then((data) => {
+            // Store raw events for filtering
+            allEvents = data;
+            
+            // Render group checkboxes and filter buttons
+            renderGroupCheckboxes();
+            renderGroupFilters();
+            
             // Preprocess events: add type="point" for events with only start date
             // and convert date strings to Date objects for vis-timeline
             const processedData = data.map(event => {

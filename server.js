@@ -85,7 +85,7 @@ const downloadImage = (url) => {
 
 app.post("/api/events/create", upload.single('imageFile'), async (req, res) => {
     try {
-        const { title, start, end, type, imageSource, imageUrl } = req.body;
+        const { title, start, end, type, imageSource, imageUrl, group } = req.body;
         
         let imagePath = '';
         
@@ -102,6 +102,17 @@ app.post("/api/events/create", upload.single('imageFile'), async (req, res) => {
         }
         // If imageSource === 'none', imagePath remains empty
 
+        // Parse group field if present
+        let groupArray = undefined;
+        if (group) {
+            try {
+                groupArray = JSON.parse(group);
+            } catch (e) {
+                // If parsing fails, ignore the group field
+                console.error("Error parsing group field:", e);
+            }
+        }
+
         const newEvent = {
             id: Date.now(),
             title: title,
@@ -109,7 +120,8 @@ app.post("/api/events/create", upload.single('imageFile'), async (req, res) => {
             start: start,
             end: end || undefined,
             type: type || undefined,
-            image: imagePath || undefined
+            image: imagePath || undefined,
+            group: groupArray
         };
 
         // Read existing events
@@ -135,7 +147,7 @@ app.post("/api/events/create", upload.single('imageFile'), async (req, res) => {
 app.put("/api/events/:id", upload.single('imageFile'), async (req, res) => {
     try {
         const eventId = parseInt(req.params.id, 10);
-        const { title, start, end, type, imageSource, imageUrl } = req.body;
+        const { title, start, end, type, imageSource, imageUrl, group } = req.body;
         
         const eventsPath = path.join(__dirname, "events.json");
         let events = [];
@@ -188,6 +200,18 @@ app.put("/api/events/:id", upload.single('imageFile'), async (req, res) => {
         }
         // If imageSource === 'keep', imagePath remains as existingEvent.image
 
+        // Parse group field if present
+        let groupArray = undefined;
+        if (group) {
+            try {
+                groupArray = JSON.parse(group);
+            } catch (e) {
+                // If parsing fails, keep existing group or set to undefined
+                console.error("Error parsing group field:", e);
+                groupArray = existingEvent.group;
+            }
+        }
+
         // Update event fields
         events[eventIndex] = {
             ...existingEvent,
@@ -196,7 +220,8 @@ app.put("/api/events/:id", upload.single('imageFile'), async (req, res) => {
             start: start,
             end: end || undefined,
             type: type || undefined,
-            image: imagePath
+            image: imagePath,
+            group: groupArray
         };
 
         // Save events
