@@ -5,7 +5,8 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title></title>
-    <link rel="icon" type="image/png" href="img/favicon.png">
+    <link rel="icon" type="image/png" href="img/favicon.png">  <link rel="preconnect" href="https://rsms.me/" />
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
   <script type="text/javascript" src="node_modules/vis-timeline/dist/vis-timeline-graph2d.min.cjs"></script>
   <link href="node_modules/vis-timeline/styles/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
   <link rel="stylesheet" href="node_modules/easymde/dist/easymde.min.css">
@@ -13,10 +14,26 @@
 
 
   <script src="node_modules/marked/lib/marked.umd.js"></script>
+
+  
   
   
   
   <style type="text/css">
+
+      .g-inter {
+    font-family: Inter, sans-serif;
+    font-feature-settings: "liga" 1, "calt" 1, /* fix for Chrome */ "zero", "ss01";
+  }
+  :root {
+  font-family: "Inter", sans-serif;
+}
+@supports (font-variation-settings: normal) {
+  :root {
+    font-family: "Inter var", sans-serif;
+    font-feature-settings: "liga" 1, "calt" 1, /* fix for Chrome */ "zero", "ss01"
+  }
+}
     #visualization {
       width: 100%;
       border: 1px solid lightgray;
@@ -563,6 +580,13 @@
         }
         
         modal.style.display = 'block';
+        
+        // Refresh EasyMDE to ensure it renders correctly
+        if (easyMDE) {
+            setTimeout(() => {
+                easyMDE.codemirror.refresh();
+            }, 10);
+        }
     }
 
     closeBtn.onclick = function() {
