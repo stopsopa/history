@@ -27,10 +27,8 @@ jobs:
       - name: Generate thumbnails
         run: npm run thumb
 
-      - name: Prepare for deployment
-        run: |
-          rm -rf node_modules
-          rm -f .gitignore
+      - name: Prune node modules
+        run: /bin/bash .github/prune-node-modules.sh node_modules/vis-timeline/dist node_modules/vis-timeline/styles node_modules/easymde/dist
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
