@@ -9,6 +9,8 @@
   <link href="https://unpkg.com/vis-timeline/styles/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
   <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
   <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
   <style type="text/css">
     #visualization {
       width: 100%;
@@ -93,6 +95,15 @@
       <a href="https://visjs.github.io/vis-timeline/examples/timeline/">docs</a>
   </div>
   <div id="visualization"></div>
+<div id="eventDetails" style="margin-top:20px; padding:15px; border:1px solid #ddd; border-radius:4px; background:#fafafa; display:none;">
+  <div style="margin-bottom:10px;">
+    <button id="detailEditBtn" style="padding:6px 12px; margin-right:8px; background:#4caf50; color:white; border:none; border-radius:4px; cursor:pointer;">Edit</button>
+    <button id="detailDeleteBtn" style="padding:6px 12px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">Delete</button>
+  </div>
+  <h3 id="detailTitle"></h3>
+  <div id="detailImageContainer" style="margin:10px 0;"></div>
+  <div id="detailContent" style="white-space:pre-wrap;"></div>
+</div>
 
 
   <!-- Add Event Modal -->
@@ -173,9 +184,14 @@
             <div class="form-group">
                 <label>Image Source:</label>
                 <div>
-                    <label><input type="radio" name="imageSource" value="none" checked> No Image</label>
+                    <label><input type="radio" name="imageSource" value="none" checked> No Image</input></label>
                     <label><input type="radio" name="imageSource" value="upload"> Upload File</label>
                     <label><input type="radio" name="imageSource" value="url"> Image URL</label>
+                    <label id="keepImageLabel" style="display: none;"><input type="radio" name="imageSource" value="keep"> Keep previous image</label>
+                </div>
+                <div id="currentImagePreview" style="margin-top: 10px; display: none;">
+                    <p style="font-size: 0.9em; color: #666;">Current image:</p>
+                    <img id="currentImageThumb" src="" style="max-width: 150px; max-height: 100px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
             </div>
 
@@ -198,6 +214,28 @@
         </form>
     </div>
   </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close" id="deleteCloseBtn">&times;</span>
+        <h2>Confirm Delete</h2>
+        <p>Are you sure you want to delete this event?</p>
+        
+        <div id="deleteEventDetails" style="margin: 20px 0; padding: 15px; background-color: #f5f5f5; border-radius: 4px;">
+            <h3 id="deleteEventTitle" style="margin-top: 0;"></h3>
+            <div id="deleteEventImage" style="margin: 10px 0;"></div>
+            <div id="deleteEventContent" style="white-space: pre-wrap; color: #666;"></div>
+            <div id="deleteEventDate" style="margin-top: 10px; font-size: 0.9em; color: #888;"></div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button id="cancelDeleteBtn" style="padding: 8px 16px; background-color: #ccc; color: black; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+            <button id="confirmDeleteBtn" style="padding: 8px 16px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Remove</button>
+        </div>
+    </div>
+  </div>
+
 
   <script type="text/javascript">
     const container = document.getElementById('visualization');
@@ -368,6 +406,160 @@
         }
     }
 
+    // Delete Modal Functions
+    const deleteModal = document.getElementById('deleteModal');
+    const deleteCloseBtn = document.getElementById('deleteCloseBtn');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    let currentDeleteId = null;
+
+    function openDeleteModal(eventId) {
+        const event = items.get(eventId);
+        if (!event) return;
+        
+        currentDeleteId = eventId;
+        
+        // Populate delete modal with event details
+        document.getElementById('deleteEventTitle').textContent = event.title;
+        document.getElementById('deleteEventContent').textContent = event.content || 'No description';
+        
+        // Show image if exists
+        const imageDiv = document.getElementById('deleteEventImage');
+        imageDiv.innerHTML = '';
+        if (event.image) {
+            const img = document.createElement('img');
+            img.src = event.image;
+            img.style.maxWidth = '200px';
+            img.style.maxHeight = '150px';
+            img.style.borderRadius = '4px';
+            imageDiv.appendChild(img);
+        }
+        
+        // Show date
+        const dateText = event.end ? `${event.start} to ${event.end}` : event.start;
+        document.getElementById('deleteEventDate').textContent = `Date: ${dateText}`;
+        
+        deleteModal.style.display = 'block';
+    }
+
+    deleteCloseBtn.onclick = function() {
+        deleteModal.style.display = 'none';
+        currentDeleteId = null;
+    }
+
+    cancelDeleteBtn.onclick = function() {
+        deleteModal.style.display = 'none';
+        currentDeleteId = null;
+    }
+
+    confirmDeleteBtn.onclick = function() {
+        if (!currentDeleteId) return;
+        
+        // If called from vis-timeline native button, use the callback
+        if (window.pendingDeleteCallback) {
+            window.pendingDeleteCallback(window.pendingDeleteItem);
+            window.pendingDeleteCallback = null;
+            window.pendingDeleteItem = null;
+            deleteModal.style.display = 'none';
+            currentDeleteId = null;
+            saveEvents();
+        } else {
+            // If called from custom button (fallback), use fetch
+            fetch(`/api/events/${currentDeleteId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    deleteModal.style.display = 'none';
+                    currentDeleteId = null;
+                    loadEvents(); // Reload timeline
+                } else {
+                    alert('Error deleting event: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting event');
+            });
+        }
+    }
+
+    // Edit Modal Functions
+    let currentEditId = null;
+
+    function openEditModal(eventId) {
+        const event = items.get(eventId);
+        if (!event) return;
+        
+        currentEditId = eventId;
+        
+        // Change modal title
+        document.querySelector('#eventModal h2').textContent = 'Edit Event';
+        document.querySelector('button[type="submit"]').textContent = 'Update Event';
+        
+        // Populate title
+        document.getElementById('title').value = event.title || '';
+        
+        // Populate content in EasyMDE
+        if (easyMDE) {
+            easyMDE.value(event.content || '');
+        }
+        
+        // Parse and populate start date
+        if (event.start) {
+            const startParts = event.start.split('-');
+            if (startParts.length >= 3) {
+                document.getElementById('startYearCustom').value = startParts[0];
+                document.getElementById('startMonth').value = startParts[1];
+                document.getElementById('startDay').value = startParts[2];
+            }
+        }
+        
+        // Handle end date if exists
+        if (event.end) {
+            isRangeCheckbox.checked = true;
+            endGroup.classList.remove('hidden');
+            const endParts = event.end.split('-');
+            if (endParts.length >= 3) {
+                document.getElementById('endYearCustom').value = endParts[0];
+                document.getElementById('endMonth').value = endParts[1];
+                document.getElementById('endDay').value = endParts[2];
+            }
+        } else {
+            isRangeCheckbox.checked = false;
+            endGroup.classList.add('hidden');
+        }
+        
+        // Handle image options
+        const keepImageLabel = document.getElementById('keepImageLabel');
+        const currentImagePreview = document.getElementById('currentImagePreview');
+        const currentImageThumb = document.getElementById('currentImageThumb');
+        
+        if (event.image) {
+            // Show "Keep previous image" option
+            keepImageLabel.style.display = 'inline';
+            currentImagePreview.style.display = 'block';
+            currentImageThumb.src = event.image;
+            
+            // Select "Keep previous image" by default
+            document.querySelector('input[name="imageSource"][value="keep"]').checked = true;
+            uploadGroup.classList.add('hidden');
+            urlGroup.classList.add('hidden');
+        } else {
+            // No existing image, hide "Keep previous image" option
+            keepImageLabel.style.display = 'none';
+            currentImagePreview.style.display = 'none';
+            
+            // Select "No Image" by default
+            document.querySelector('input[name="imageSource"][value="none"]').checked = true;
+            uploadGroup.classList.add('hidden');
+            urlGroup.classList.add('hidden');
+        }
+        
+        modal.style.display = 'block';
+    }
+
     closeBtn.onclick = function() {
         modal.style.display = "none";
     }
@@ -536,9 +728,20 @@
 
     function createTimeline() {
         const options = {
-            editable: true,
+            editable: {
+                add: false,         // Disable adding via double-click
+                updateTime: true,   // Allow moving items
+                updateGroup: false, // Disable group changes
+                remove: false,      // Disable native delete button (we use custom UI),
+
+                overrideItems: false
+            },
             template: function (item, element, data) {
                 const container = document.createElement('span');
+                container.style.display = 'flex';
+                container.style.alignItems = 'center';
+                container.style.gap = '5px';
+                
                 if (item.image) {
                     const img = document.createElement('img');
                     // Try thumbnail first, fallback to original
@@ -555,7 +758,14 @@
                     img.style.marginRight = '5px';
                     container.appendChild(img);
                 }
-                container.appendChild(document.createTextNode(item.title));
+                
+                const textSpan = document.createElement('span');
+                textSpan.textContent = item.title;
+                textSpan.style.flex = '1';
+                container.appendChild(textSpan);
+                
+
+                
                 return container;
             },
             onMove: function (item, callback) {
@@ -568,16 +778,53 @@
                 saveEvents();
             },
             onRemove: function (item, callback) {
-                if (confirm('Remove item ' + item.title + '?')) {
-                    callback(item);
-                    saveEvents();
-                } else {
-                    callback(null);
-                }
-            }
-        };
+                // Store the callback to use after confirmation
+                window.pendingDeleteCallback = callback;
+                window.pendingDeleteItem = item;
+                openDeleteModal(item.id);
+            },
 
+        };
+        // Render event details functions
+        function renderEventDetails(ev) {
+            if (!ev) return;
+            document.getElementById('detailTitle').textContent = ev.title || '';
+            const imgDiv = document.getElementById('detailImageContainer');
+            imgDiv.innerHTML = '';
+            if (ev.image) {
+                const img = document.createElement('img');
+                img.src = ev.image;
+                img.style.maxWidth = '300px';
+                img.style.borderRadius = '4px';
+                imgDiv.appendChild(img);
+            }
+            const contentDiv = document.getElementById('detailContent');
+            const markdown = ev.content || '';
+            contentDiv.innerHTML = marked.parse(markdown);
+            document.getElementById('detailEditBtn').onclick = function() { openEditModal(ev.id); };
+            document.getElementById('detailDeleteBtn').onclick = function() { openDeleteModal(ev.id); };
+            document.getElementById('eventDetails').style.display = 'block';
+        }
+        function clearEventDetails() {
+            document.getElementById('eventDetails').style.display = 'none';
+        }
         timeline = new vis.Timeline(container, items, options);
+        // Add double-click listener to open edit modal
+        timeline.on('doubleClick', function (properties) {
+            if (properties.item) {
+                openEditModal(properties.item);
+            }
+        });
+        
+        // Add select listener to show event details
+        timeline.on('select', function (properties) {
+            if (properties.items && properties.items.length) {
+                const ev = items.get(properties.items[0]);
+                renderEventDetails(ev);
+            } else {
+                clearEventDetails();
+            }
+        });
     }
 
     function saveEvents() {

@@ -121,6 +121,53 @@ app.post("/api/events/create", upload.single('imageFile'), async (req, res) => {
     }
 });
 
+// Delete event endpoint
+app.delete("/api/events/:id", async (req, res) => {
+    try {
+        const eventId = parseInt(req.params.id, 10);
+        const eventsPath = path.join(__dirname, "events.json");
+        
+        // Read existing events
+        let events = [];
+        try {
+            const data = await fs.promises.readFile(eventsPath, "utf8");
+            events = JSON.parse(data);
+        } catch (err) {
+            return res.status(404).json({ success: false, error: "Events file not found" });
+        }
+        
+        // Find the event to delete
+        const eventIndex = events.findIndex(e => e.id === eventId);
+        if (eventIndex === -1) {
+            return res.status(404).json({ success: false, error: "Event not found" });
+        }
+        
+        const eventToDelete = events[eventIndex];
+        
+        // Delete associated image file if it exists and is in img/ directory
+        if (eventToDelete.image && eventToDelete.image.startsWith('img/')) {
+            const imagePath = path.join(__dirname, eventToDelete.image);
+            try {
+                await fs.promises.unlink(imagePath);
+                console.log(`Deleted image: ${imagePath}`);
+            } catch (err) {
+                console.log(`Could not delete image ${imagePath}:`, err.message);
+            }
+        }
+        
+        // Remove event from array
+        events.splice(eventIndex, 1);
+        
+        // Save updated events
+        await fs.promises.writeFile(eventsPath, JSON.stringify(events, null, 2));
+        
+        res.json({ success: true, message: "Event deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting event:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Delay middleware - delays response if ?delay=X query parameter is present
 app.use((req, res, next) => {
     const delayParam = req.query.delay;
