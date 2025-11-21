@@ -204,30 +204,39 @@
             </div>
 
             <div class="form-group">
-                <label>Image Source:</label>
-                <div>
-                    <label><input type="radio" name="imageSource" value="none" checked> No Image</input></label>
-                    <label><input type="radio" name="imageSource" value="upload"> Upload File</label>
-                    <label><input type="radio" name="imageSource" value="url"> Image URL</label>
-                    <label id="keepImageLabel" style="display: none;"><input type="radio" name="imageSource" value="keep"> Keep previous image</label>
-                </div>
-                <div id="currentImagePreview" style="margin-top: 10px; display: none;">
-                    <p style="font-size: 0.9em; color: #666;">Current image:</p>
-                    <img id="currentImageThumb" src="" style="max-width: 150px; max-height: 100px; border: 1px solid #ccc; border-radius: 4px;">
-                </div>
-            </div>
+                <div style="display: flex; gap: 20px; align-items: flex-start;">
+                    <!-- Left side: Radio buttons -->
+                    <div style="display: flex; flex-direction: column; gap: 8px; min-width: 150px;">
+                        <label style="font-weight: bold; margin-bottom: 4px;">Image:</label>
+                        <label><input type="radio" name="imageSource" value="none" checked> No Image</label>
+                        <label><input type="radio" name="imageSource" value="upload"> Upload File</label>
+                        <label><input type="radio" name="imageSource" value="url"> Image URL</label>
+                        <label id="keepImageLabel" style="display: none;"><input type="radio" name="imageSource" value="keep"> Keep previous image</label>
+                    </div>
 
-            <div class="form-group hidden" id="uploadGroup">
-                <div class="drop-zone" id="dropZone">
-                    <p>Drag & Drop image here or click to select</p>
-                    <input type="file" id="imageFile" name="imageFile" accept="image/*" style="display: none;">
-                    <p id="fileName" style="font-size: 0.9em; color: #666;"></p>
-                </div>
-            </div>
+                    <!-- Right side: Inputs and Preview -->
+                    <div style="flex: 1;">
+                        <!-- Current Image Preview -->
+                        <div id="currentImagePreview" style="display: none; margin-bottom: 10px;">
+                            <p style="font-size: 0.9em; color: #666; margin-top: 0;">Current image:</p>
+                            <img id="currentImageThumb" src="" style="max-width: 100%; max-height: 150px; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
 
-            <div class="form-group hidden" id="urlGroup">
-                <label for="imageUrl">Image URL:</label>
-                <input type="url" id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg">
+                        <!-- Upload Input -->
+                        <div class="hidden" id="uploadGroup">
+                            <div class="drop-zone" id="dropZone" style="margin-top: 0;">
+                                <p>Drag & Drop image here or click to select</p>
+                                <input type="file" id="imageFile" name="imageFile" accept="image/*" style="display: none;">
+                                <p id="fileName" style="font-size: 0.9em; color: #666;"></p>
+                            </div>
+                        </div>
+
+                        <!-- URL Input -->
+                        <div class="hidden" id="urlGroup">
+                            <input type="url" id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div id="errorMessage" style="color: red; margin-bottom: 15px; display: none;"></div>
