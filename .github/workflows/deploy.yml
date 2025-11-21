@@ -6,23 +6,46 @@ on:
       - main
   workflow_dispatch:
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  test:
+    runs-on: ubuntu-22.04 # https://github.com/actions/runner-images#available-images
+    # Define environment variable at the job level
+    env:
+      DEBUG_MODE: "off"
+      # DEBUG_MODE: "on"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
         with:
-          node-version: "20"
+          node-version: 24.11.0
+          cache: "yarn"
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
+      - uses: actions/cache/restore@v4.2.2 # https://github.com/actions/cache/blob/main/examples.md#node---yarn
+        id: restore-cache
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Yarn install
+        run: yarn install --production=false
+
+      - name: cache key
+        run: echo ">${{ steps.restore-cache.outputs.cache-primary-key }}<"
+
+      - uses: actions/cache/save@v4.2.2 # https://github.com/actions/cache/blob/main/caching-strategies.md#reusing-primary-key-from-restore-cache-as-input-to-save-action
+        # error: Failed to save: Failed to CreateCacheEntry: Received non-retryable error: Failed request: (409) Conflict: cache entry with the same key, version, and scope already exists
+        # more: https://github.com/actions/cache/issues/1541
+
+        # on the other hand error "Cache save failed." means cache already exist for this key
+        with:
+          path: node_modules
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
 
       - name: Generate thumbnails
         run: npm run thumb
@@ -35,3 +58,23 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
+
+  # Deployment job
+  github-pages:
+    # NOTE: In case of error:
+    # github-pages
+    # Branch "main" is not allowed to deploy to github-pages due to environment protection rules.
+    # https://github.com/orgs/community/discussions/39054#discussioncomment-6420042
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-22.04
+    needs: test
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4.0.5
+        with:
+          error_count: 3
+          # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-of-onworkflow_callsecrets
+          # https://github.com/actions/deploy-pages#inputs-
