@@ -111,9 +111,9 @@
             <div class="form-group">
                 <label>Start Date:</label>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="startYearCustom" placeholder="Year (e.g., 1985 or -105)" required style="flex: 2;">
-                    <select id="startMonth" name="startMonth" required style="flex: 1;">
-                        <option value="">Month</option>
+                    <input type="number" id="startYearCustom" placeholder="Year (e.g., 1985 or -105)" required style="flex: 2; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                    <select id="startMonth" name="startMonth" required style="flex: 1; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">-- Month --</option>
                         <option value="01">January</option>
                         <option value="02">February</option>
                         <option value="03">March</option>
@@ -127,8 +127,8 @@
                         <option value="11">November</option>
                         <option value="12">December</option>
                     </select>
-                    <select id="startDay" name="startDay" required style="flex: 1;">
-                        <option value="">Day</option>
+                    <select id="startDay" name="startDay" required style="flex: 1; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">-- Day --</option>
                     </select>
                 </div>
                 <div id="startDateError" style="color: red; font-size: 12px; margin-top: 4px; display: none;"></div>
@@ -137,9 +137,9 @@
             <div class="form-group hidden" id="endGroup">
                 <label>End Date:</label>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="endYearCustom" placeholder="Year (e.g., 1985 or -105)" style="flex: 2;">
-                    <select id="endMonth" name="endMonth" style="flex: 1;">
-                        <option value="">Month</option>
+                    <input type="number" id="endYearCustom" placeholder="Year (e.g., 1985 or -105)" style="flex: 2; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                    <select id="endMonth" name="endMonth" style="flex: 1; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">-- Month --</option>
                         <option value="01">January</option>
                         <option value="02">February</option>
                         <option value="03">March</option>
@@ -153,8 +153,8 @@
                         <option value="11">November</option>
                         <option value="12">December</option>
                     </select>
-                    <select id="endDay" name="endDay" style="flex: 1;">
-                        <option value="">Day</option>
+                    <select id="endDay" name="endDay" style="flex: 1; padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="">-- Day --</option>
                     </select>
                 </div>
                 <div id="endDateError" style="color: red; font-size: 12px; margin-top: 4px; display: none;"></div>
@@ -209,7 +209,7 @@
 
     // Populate day dropdowns (1-31)
     function populateDays(selectElement) {
-        selectElement.innerHTML = '<option value="">Day</option>';
+        selectElement.innerHTML = '<option value="">-- Day --</option>';
         for (let i = 1; i <= 31; i++) {
             const option = document.createElement('option');
             option.value = String(i).padStart(2, '0');
@@ -317,6 +317,15 @@
     // Modal Logic
     addEventBtn.onclick = function() {
         modal.style.display = "block";
+        
+        // Reset form to clear all previous values
+        form.reset();
+        
+        // Clear any error messages
+        document.getElementById('errorMessage').style.display = 'none';
+        document.getElementById('startDateError').style.display = 'none';
+        document.getElementById('endDateError').style.display = 'none';
+        
         // Set default date to today
         const today = new Date();
         const year = today.getFullYear();
@@ -326,6 +335,10 @@
         document.getElementById('startYearCustom').value = year;
         document.getElementById('startMonth').value = month;
         document.getElementById('startDay').value = day;
+        
+        // Ensure checkbox is unchecked and end date is hidden
+        isRangeCheckbox.checked = false;
+        endGroup.classList.add('hidden');
     }
 
     closeBtn.onclick = function() {
@@ -338,10 +351,14 @@
         }
     }
 
-    // Form Interactions
+    // Toggle end date visibility and copy start date values
     isRangeCheckbox.onchange = function() {
         if (this.checked) {
             endGroup.classList.remove('hidden');
+            // Copy start date values to end date
+            document.getElementById('endYearCustom').value = document.getElementById('startYearCustom').value;
+            document.getElementById('endMonth').value = document.getElementById('startMonth').value;
+            document.getElementById('endDay').value = document.getElementById('startDay').value;
         } else {
             endGroup.classList.add('hidden');
         }
