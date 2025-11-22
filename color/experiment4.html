@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Experiment 4: CSS High Contrast</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .color-box {
+            padding: 20px;
+            border: 1px solid #ccc;
+            max-width: 300px;
+            border-radius: 8px;
+            transition: background-color 0.1s;
+            
+            background-color: var(--bg);
+            
+            /* 
+               Technique 4: CSS High Contrast Switch
+               Using Relative Color Syntax to extract 'l' (lightness) from --bg.
+               Then using calc() to flip between 0% (black) and 100% (white).
+               
+               Logic:
+               If l > 50 (light background) -> we want black (0%).
+               If l < 50 (dark background) -> we want white (100%).
+               
+               calc((l - 50) * -1000)
+               If l=60: (60-50)*-1000 = -10000 -> clamped to 0%
+               If l=40: (40-50)*-1000 = 10000 -> clamped to 100%
+            */
+            color: hsl(0 0% calc((l - 60) * -100000) / 1); 
+            /* Note: using 'l' directly requires 'hsl(from var(--bg) ...)' syntax */
+            color: hsl(from var(--bg) 0 0 calc((l - 60) * -100000));
+        }
+
+        @supports not (color: hsl(from red h s l)) {
+            .color-box::after {
+                content: " (Your browser does not support Relative Color Syntax)";
+                display: block;
+                font-size: 0.8em;
+                color: red;
+                background: white;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Experiment 4: CSS High Contrast</h1>
+    <p>Technique: CSS Threshold Switch (Black/White)</p>
+    <p>This uses CSS Relative Color Syntax and a <code>calc()</code> trick to force the text color to either Black or White based on the background lightness threshold.</p>
+    
+    <input type="color" id="colorPicker" value="#ff0000">
+
+    <div id="colorBox" class="color-box" style="--bg: #ff0000;">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+    </div>
+
+    <script>
+        const colorPicker = document.getElementById('colorPicker');
+        const colorBox = document.getElementById('colorBox');
+
+        colorPicker.addEventListener('input', (event) => {
+            const color = event.target.value;
+            console.log('Current color:', color);
+            colorBox.style.setProperty('--bg', color);
+        });
+
+        // Trigger on load
+        colorPicker.dispatchEvent(new Event('input'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Experiment 3: Relative Color Syntax</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .color-box {
+            padding: 20px;
+            border: 1px solid #ccc;
+            max-width: 300px;
+            border-radius: 8px;
+            transition: background-color 0.1s;
+            
+            /* Set the background color as a custom property */
+            background-color: var(--bg);
+            
+            /* 
+               Technique 3: Relative Color Syntax 
+               Derive text color from --bg.
+               We rotate the hue by 180deg to get the complementary color.
+               We also invert the lightness (100% - l) to ensure contrast if the background is dark/light.
+            */
+            color: hsl(from var(--bg) calc(h + 180) s calc(100 - l));
+        }
+        
+        /* Fallback for older browsers */
+        @supports not (color: hsl(from red h s l)) {
+            .color-box::after {
+                content: " (Your browser does not support Relative Color Syntax)";
+                display: block;
+                font-size: 0.8em;
+                color: red;
+                background: white;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Experiment 3: Relative Color Syntax</h1>
+    <p>Technique: Modern CSS <code>color: hsl(from var(--bg) ...)</code></p>
+    <p>This uses the new CSS Relative Color Syntax to calculate the color directly in CSS. No JS calculation needed for the color itself, only to set the <code>--bg</code> variable.</p>
+    
+    <input type="color" id="colorPicker" value="#ff0000">
+
+    <!-- Initial style with default variable -->
+    <div id="colorBox" class="color-box" style="--bg: #ff0000;">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+    </div>
+
+    <script>
+        const colorPicker = document.getElementById('colorPicker');
+        const colorBox = document.getElementById('colorBox');
+
+        colorPicker.addEventListener('input', (event) => {
+            const color = event.target.value;
+            console.log('Current color:', color);
+            
+            // We only need to update the CSS variable
+            colorBox.style.setProperty('--bg', color);
+        });
+
+        // Trigger on load
+        colorPicker.dispatchEvent(new Event('input'));
+    </script>
+</body>
+</html>

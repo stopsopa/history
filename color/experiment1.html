@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Experiment 1: Mix Blend Mode</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        /* Technique 1: Mix Blend Mode */
+        .contrast-text {
+            color: white;
+            mix-blend-mode: difference;
+        }
+    </style>
+</head>
+<body>
+    <h1>Experiment 1: Mix Blend Mode</h1>
+    <p>Technique: <code>mix-blend-mode: difference</code></p>
+    <p>This CSS-only technique inverts the text color against the background. It works well for high contrast but can produce mid-grey text on mid-grey backgrounds.</p>
+    
+    <input type="color" id="colorPicker" value="#ff0000">
+
+    <div id="colorBox" style="padding: 20px; border: 1px solid #ccc; max-width: 300px; border-radius: 8px; transition: background-color 0.1s;">
+        <span class="contrast-text">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        </span>
+    </div>
+
+    <script>
+        const colorPicker = document.getElementById('colorPicker');
+        const colorBox = document.getElementById('colorBox');
+
+        colorPicker.addEventListener('input', (event) => {
+            const color = event.target.value;
+            console.log('Current color:', color);
+            colorBox.style.backgroundColor = color;
+        });
+
+        // Trigger on load
+        colorPicker.dispatchEvent(new Event('input'));
+    </script>
+</body>
+</html>

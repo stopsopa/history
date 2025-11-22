@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Input Experiment</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Color Input Experiment</h1>
+    <p>Open the console to see the color values update in real-time.</p>
+    
+    <input type="color" id="colorPicker" value="#ff0000">
+
+    <div id="colorBox" style="padding: 20px; border: 1px solid #ccc; max-width: 300px; border-radius: 8px; transition: background-color 0.1s;">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+    </div>
+
+    <script>
+        const colorPicker = document.getElementById('colorPicker');
+        const colorBox = document.getElementById('colorBox');
+
+        // The 'input' event fires continuously as the user manipulates the control
+        // The 'change' event would only fire when the user dismisses the picker or commits the value
+        colorPicker.addEventListener('input', (event) => {
+            const color = event.target.value;
+            console.log('Current color:', color);
+            colorBox.style.backgroundColor = color;
+        });
+
+        // Trigger on load
+        colorPicker.dispatchEvent(new Event('input'));
+    </script>
+</body>
+</html>
