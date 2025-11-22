@@ -168,7 +168,7 @@
         color: #d32f2f;
       }
       
-      /* Modifier Key Indicator */
+    /* Modifier Key Indicator */
       #modifierIndicator {
         position: fixed;
         top: 3px;
@@ -185,8 +185,71 @@
       #modifierIndicator.active {
         background-color: #4caf50;
       }
+
+      /* Custom Selection Styles */
+      .vis-item.selected-item-1 {
+        border-color: #ff0000 !important;
+        background-color: #ffe6e6 !important;
+        box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        z-index: 2;
+      }
+      
+      .vis-item.selected-item-2 {
+        border-color: #0000ff !important;
+        background-color: #e6e6ff !important;
+        box-shadow: 0 0 10px rgba(0, 0, 255, 0.5);
+        z-index: 2;
+      }
+
+      /* Comparison View Styles */
+      #compare {
+        margin-top: 10px;
+      }
+
+      #compare.active {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+        min-height: 50px;
+        position: relative;
+        margin-top: 20px;
+      }
+
+      #compare.instruction {
+        font-size: 13px;
+        color: #666;
+        padding: 5px 0;
+        font-style: italic;
+        min-height: auto;
+        border: none;
+        background: none;
+      }
+
+      .compare-close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #999;
+      }
+      
+      .compare-close-btn:hover {
+        color: #333;
+      }
+
+      .compare-ids {
+        margin-bottom: 15px;
+        font-family: monospace;
+      }
+
+      .compare-id-1 { color: #cc0000; font-weight: bold; }
+      .compare-id-2 { color: #0000cc; font-weight: bold; }
       .vis-item .vis-item-overflow:hover {
-overflow: visible;
+        overflow: visible;
       }
     </style>
   </head>
@@ -1486,6 +1549,60 @@ overflow: visible;
         return new Date(year, month, day);
       }
 
+      // Render event details functions
+      function renderEventDetails(ev) {
+        if (!ev) return;
+        document.getElementById("detailTitle").textContent = ev.title || "";
+        const imgDiv = document.getElementById("detailImageContainer");
+        imgDiv.innerHTML = "";
+        if (ev.image) {
+          const img = document.createElement("img");
+          img.src = ev.image;
+          img.style.maxWidth = "300px";
+          img.style.borderRadius = "4px";
+          imgDiv.appendChild(img);
+        }
+        const contentDiv = document.getElementById("detailContent");
+        const markdown = ev.content || "";
+        contentDiv.innerHTML = marked.parse(markdown);
+
+        // Format and display date(s)
+        const startDateSpan = document.getElementById("detailStartDate");
+        const endDateSpan = document.getElementById("detailEndDate");
+        const durationSpan = document.getElementById("detailDuration");
+
+        if (ev.start) {
+          const startStr = formatDateToString(ev.start);
+          startDateSpan.textContent = formatDateForDisplay(startStr);
+        } else {
+          startDateSpan.textContent = "";
+        }
+
+        if (ev.end) {
+          const endStr = formatDateToString(ev.end);
+          endDateSpan.textContent = formatDateForDisplay(endStr);
+          // Calculate and display duration
+          const startStr = formatDateToString(ev.start);
+          const duration = calculateDuration(startStr, endStr);
+          durationSpan.textContent = duration ? `(${duration})` : "";
+        } else {
+          endDateSpan.textContent = "";
+          durationSpan.textContent = "";
+        }
+
+        document.getElementById("detailEditBtn").onclick = function () {
+          openEditModal(ev.id);
+        };
+        document.getElementById("detailDeleteBtn").onclick = function () {
+          openDeleteModal(ev.id);
+        };
+        document.getElementById("eventDetails").style.display = "block";
+      }
+
+      function clearEventDetails() {
+        document.getElementById("eventDetails").style.display = "none";
+      }
+
       function loadEvents() {
         fetch("events.json")
           .then((response) => response.json())
@@ -1542,11 +1659,14 @@ overflow: visible;
 
             overrideItems: false,
           },
+          selectable: false, // Disable default selection to use custom logic
           template: function (item, element, data) {
             const container = document.createElement("span");
             container.style.display = "flex";
             container.style.alignItems = "center";
             container.style.gap = "5px";
+            // Add data-id for custom selection logic
+            container.dataset.id = item.id;
 
             if (item.image) {
               const img = document.createElement("img");
@@ -1591,57 +1711,7 @@ overflow: visible;
         };
 
         // Render event details functions
-        function renderEventDetails(ev) {
-          if (!ev) return;
-          document.getElementById("detailTitle").textContent = ev.title || "";
-          const imgDiv = document.getElementById("detailImageContainer");
-          imgDiv.innerHTML = "";
-          if (ev.image) {
-            const img = document.createElement("img");
-            img.src = ev.image;
-            img.style.maxWidth = "300px";
-            img.style.borderRadius = "4px";
-            imgDiv.appendChild(img);
-          }
-          const contentDiv = document.getElementById("detailContent");
-          const markdown = ev.content || "";
-          contentDiv.innerHTML = marked.parse(markdown);
 
-          // Format and display date(s)
-          const startDateSpan = document.getElementById("detailStartDate");
-          const endDateSpan = document.getElementById("detailEndDate");
-          const durationSpan = document.getElementById("detailDuration");
-
-          if (ev.start) {
-            const startStr = formatDateToString(ev.start);
-            startDateSpan.textContent = formatDateForDisplay(startStr);
-          } else {
-            startDateSpan.textContent = "";
-          }
-
-          if (ev.end) {
-            const endStr = formatDateToString(ev.end);
-            endDateSpan.textContent = formatDateForDisplay(endStr);
-            // Calculate and display duration
-            const startStr = formatDateToString(ev.start);
-            const duration = calculateDuration(startStr, endStr);
-            durationSpan.textContent = duration ? `(${duration})` : "";
-          } else {
-            endDateSpan.textContent = "";
-            durationSpan.textContent = "";
-          }
-
-          document.getElementById("detailEditBtn").onclick = function () {
-            openEditModal(ev.id);
-          };
-          document.getElementById("detailDeleteBtn").onclick = function () {
-            openDeleteModal(ev.id);
-          };
-          document.getElementById("eventDetails").style.display = "block";
-        }
-        function clearEventDetails() {
-          document.getElementById("eventDetails").style.display = "none";
-        }
         timeline = new vis.Timeline(container, items, options);
         // Add double-click listener to open edit modal
         timeline.on("doubleClick", function (properties) {
@@ -1651,14 +1721,7 @@ overflow: visible;
         });
 
         // Add select listener to show event details
-        timeline.on("select", function (properties) {
-          if (properties.items && properties.items.length) {
-            const ev = items.get(properties.items[0]);
-            renderEventDetails(ev);
-          } else {
-            clearEventDetails();
-          }
-        });
+
       }
 
       // Helper function to convert Date objects back to date strings
@@ -1701,6 +1764,355 @@ overflow: visible;
 
       // Initial Load
       loadEvents();
+
+      // --- Custom Selection Logic ---
+      let selectedEventIds = [];
+
+      // Handle click events for selection
+      document.body.addEventListener('click', function (e) {
+        // Find closest element with data-id (our timeline items)
+        const el = e.target.closest('[data-id]');
+        
+        if (el) {
+          const id = el.dataset.id;
+          handleSelection(id, e);
+        }
+      });
+
+      // Handle ESC key to clear selection
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          clearSelection();
+        }
+      });
+
+      function handleSelection(id, event) {
+        const isModifierPressed = event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
+        
+        // Convert id to number if needed (vis-timeline might use numbers)
+        // But dataset is always string. Let's check items to see type.
+        // items.get(id) works with both usually if IDs are simple.
+        // Let's keep it as is from dataset (string) but cast if needed.
+        // Actually, vis-timeline IDs can be strings or numbers. 
+        // We should check what type our IDs are. 
+        // In loadEvents we don't force type. 
+        // Let's try to match type from items.
+        let targetId = id;
+        const item = items.get(id);
+        if (!item) {
+            // Try converting to number
+            const numId = parseInt(id, 10);
+            if (items.get(numId)) {
+                targetId = numId;
+            }
+        }
+
+        if (!isModifierPressed) {
+          // Case: No modifier -> Select only this one (as #1)
+          selectedEventIds = [targetId];
+        } else {
+          // Case: Modifier pressed
+          if (selectedEventIds.length === 0) {
+            // Nothing selected -> Select as #1
+            selectedEventIds = [targetId];
+          } else if (selectedEventIds.length === 1) {
+            // One selected -> Select as #2 (if different)
+            if (selectedEventIds[0] != targetId) {
+                selectedEventIds.push(targetId);
+            }
+          } else {
+            // Two selected -> Replace #2
+             if (selectedEventIds[0] != targetId) {
+                selectedEventIds[1] = targetId;
+             } else {
+                 // Clicked #1 again with modifier? Let's do nothing or maybe deselect?
+                 // User requirement: "when user keeps clicking events then only the second one is changing in selection"
+                 // So if I click #1, it stays #1.
+             }
+          }
+        }
+        
+        updateSelectionVisuals();
+        renderComparison();
+
+        // Show details for the clicked event
+        if (selectedEventIds.includes(targetId)) {
+             const ev = items.get(targetId);
+             renderEventDetails(ev);
+        } else if (selectedEventIds.length > 0) {
+             const ev = items.get(selectedEventIds[0]);
+             renderEventDetails(ev);
+        } else {
+             clearEventDetails();
+        }
+      }
+
+      function clearSelection() {
+        selectedEventIds = [];
+        updateSelectionVisuals();
+        renderComparison();
+        clearEventDetails();
+      }
+
+      function updateSelectionVisuals() {
+        // Reset all items classes
+        items.forEach(item => {
+            const updatedItem = { ...item, className: '' };
+            // We need to preserve existing classes if any? 
+            // For now assuming no other critical classes are managed via className property on data items directly.
+            // Vis-timeline uses className property on item data.
+            
+            // Actually, better to only update the ones that changed to avoid full re-render if possible,
+            // but iterating all is safer to ensure clean state.
+            
+            let className = '';
+            if (selectedEventIds[0] == item.id) {
+                className = 'selected-item-1';
+            } else if (selectedEventIds[1] == item.id) {
+                className = 'selected-item-2';
+            }
+            
+            if (item.className !== className) {
+                items.update({ id: item.id, className: className });
+            }
+        });
+      }
+
+      function renderComparison() {
+        const container = document.getElementById('compare');
+        container.innerHTML = '';
+        container.className = ''; // Reset classes
+
+        if (selectedEventIds.length === 0) {
+            return;
+        }
+
+        if (selectedEventIds.length === 1) {
+            container.className = 'instruction';
+            container.innerHTML = 'Select a second event with <b>Shift/Ctrl/Alt + Click</b> to compare.';
+            return;
+        }
+
+        // Two events selected - Show full comparison
+        container.className = 'active';
+
+        // Add Close Button
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'compare-close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = clearSelection;
+        container.appendChild(closeBtn);
+
+        // Display IDs
+        const idsDiv = document.createElement('div');
+        idsDiv.className = 'compare-ids';
+        
+        const ev1 = items.get(selectedEventIds[0]);
+        const ev2 = selectedEventIds[1] ? items.get(selectedEventIds[1]) : null;
+
+        let html = `<span class="compare-id-1">A: ${ev1 ? ev1.title : '???'}</span>`;
+        if (ev2) {
+            html += ` <br> <span class="compare-id-2">C: ${ev2.title}</span>`;
+        }
+        idsDiv.innerHTML = html;
+        container.appendChild(idsDiv);
+
+        // Visualization Logic
+        const svgContainer = document.createElement('div');
+        // Simple SVG visualization
+        const width = container.clientWidth - 40;
+        const height = 200; // Fixed height for now
+        
+        // We need to normalize dates to fit in width
+        // Get all relevant dates
+        let dates = [];
+        
+        function addDates(ev) {
+            if (!ev) return;
+            dates.push(ev.start);
+            if (ev.end) dates.push(ev.end);
+            else dates.push(ev.start); // Treat point as start=end for range calc
+        }
+        
+        addDates(ev1);
+        addDates(ev2);
+        
+        // Find min/max
+        const minDate = new Date(Math.min(...dates));
+        const maxDate = new Date(Math.max(...dates));
+        
+        // Add some padding (10%)
+        const totalDuration = maxDate - minDate;
+        const padding = totalDuration * 0.1 || 1000 * 60 * 60 * 24; // Default 1 day if 0
+        const plotMin = new Date(minDate.getTime() - padding);
+        const plotMax = new Date(maxDate.getTime() + padding);
+        const plotDuration = plotMax - plotMin;
+
+        function getX(date) {
+            return ((date - plotMin) / plotDuration) * width;
+        }
+
+        // SVG Construction
+        let svg = `<svg width="${width}" height="${height}" style="overflow: visible;">`;
+        
+        // Defs for markers
+        svg += `<defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L9,3 z" fill="#666" />
+            </marker>
+        </defs>`;
+
+        // Draw Event 1 (Top)
+        const y1 = 30;
+        const x1Start = getX(ev1.start);
+        const x1End = ev1.end ? getX(ev1.end) : x1Start;
+        
+        // Line for Event 1
+        svg += `<line x1="${x1Start}" y1="${y1}" x2="${x1End}" y2="${y1}" stroke="black" stroke-width="4" />`;
+        // Title Label
+        svg += `<text x="${(x1Start + x1End) / 2}" y="${y1 - 25}" text-anchor="middle" font-weight="bold" font-size="14">${ev1.title}</text>`;
+        
+        // Labels A, B
+        svg += `<text x="${x1Start}" y="${y1 - 10}" text-anchor="middle" font-size="12">A</text>`;
+        svg += `<text x="${x1Start}" y="${y1 + 20}" text-anchor="middle" font-size="10" fill="#666">${formatDateForDisplay(formatDateToString(ev1.start))}</text>`;
+        svg += `<circle cx="${x1Start}" cy="${y1}" r="4" fill="white" stroke="blue" stroke-width="2" />`;
+        
+        if (ev1.end) {
+            svg += `<text x="${x1End}" y="${y1 - 10}" text-anchor="middle" font-size="12">B</text>`;
+            svg += `<text x="${x1End}" y="${y1 + 20}" text-anchor="middle" font-size="10" fill="#666">${formatDateForDisplay(formatDateToString(ev1.end))}</text>`;
+            svg += `<circle cx="${x1End}" cy="${y1}" r="4" fill="white" stroke="blue" stroke-width="2" />`;
+        }
+
+        // Draw Event 2 (Bottom) if exists
+        let y2 = 100;
+        if (ev2) {
+            const x2Start = getX(ev2.start);
+            const x2End = ev2.end ? getX(ev2.end) : x2Start;
+            
+            svg += `<line x1="${x2Start}" y1="${y2}" x2="${x2End}" y2="${y2}" stroke="black" stroke-width="4" />`;
+            // Title Label
+            svg += `<text x="${(x2Start + x2End) / 2}" y="${y2 - 25}" text-anchor="middle" font-weight="bold" font-size="14">${ev2.title}</text>`;
+
+            // Labels C, D
+            svg += `<text x="${x2Start}" y="${y2 - 10}" text-anchor="middle" font-size="12">C</text>`;
+            svg += `<text x="${x2Start}" y="${y2 + 20}" text-anchor="middle" font-size="10" fill="#666">${formatDateForDisplay(formatDateToString(ev2.start))}</text>`;
+            svg += `<circle cx="${x2Start}" cy="${y2}" r="4" fill="white" stroke="purple" stroke-width="2" />`;
+            
+            if (ev2.end) {
+                svg += `<text x="${x2End}" y="${y2 - 10}" text-anchor="middle" font-size="12">D</text>`;
+                svg += `<text x="${x2End}" y="${y2 + 20}" text-anchor="middle" font-size="10" fill="#666">${formatDateForDisplay(formatDateToString(ev2.end))}</text>`;
+                svg += `<circle cx="${x2End}" cy="${y2}" r="4" fill="white" stroke="purple" stroke-width="2" />`;
+            }
+
+            // Draw dotted vertical lines for all points
+            const drawDotted = (x, yTop, yBottom) => {
+                return `<line x1="${x}" y1="${yTop}" x2="${x}" y2="${yBottom}" stroke="#ccc" stroke-dasharray="4" />`;
+            };
+            
+            svg += drawDotted(x1Start, y1, height);
+            if (ev1.end) svg += drawDotted(x1End, y1, height);
+            svg += drawDotted(x2Start, y2, height);
+            if (ev2.end) svg += drawDotted(x2End, y2, height);
+
+            // Calculate and draw differences
+            // We need to show differences between relevant points.
+            // Let's collect points: A(Start1), B(End1), C(Start2), D(End2)
+            
+            const points = [
+                { label: 'A', time: ev1.start, x: x1Start, y: y1 },
+                { label: 'B', time: ev1.end, x: x1End, y: y1, exists: !!ev1.end },
+                { label: 'C', time: ev2.start, x: x2Start, y: y2 },
+                { label: 'D', time: ev2.end, x: x2End, y: y2, exists: !!ev2.end }
+            ];
+
+            // Helper to format duration
+            const formatDiff = (ms) => {
+                const absMs = Math.abs(ms);
+                const days = Math.floor(absMs / (1000 * 60 * 60 * 24));
+                const years = (days / 365.25).toFixed(1);
+                return `${days} days (${years}y)`;
+            };
+
+            // Draw dimension lines
+            let dimY = 140;
+            const drawDim = (p1, p2, yLevel) => {
+                if (!p1.exists && p1.label !== 'A' && p1.label !== 'C') return; // Skip if point doesn't exist (except starts which always exist)
+                if (!p2.exists && p2.label !== 'A' && p2.label !== 'C') return;
+                
+                // Don't draw if same point
+                if (p1.x === p2.x) return;
+
+                const minX = Math.min(p1.x, p2.x);
+                const maxX = Math.max(p1.x, p2.x);
+                const midX = (minX + maxX) / 2;
+                const diff = p2.time - p1.time;
+                
+                let s = `<line x1="${minX}" y1="${yLevel}" x2="${maxX}" y2="${yLevel}" stroke="#999" stroke-width="1" />`;
+                // Ticks
+                s += `<line x1="${minX}" y1="${yLevel-3}" x2="${minX}" y2="${yLevel+3}" stroke="#999" />`;
+                s += `<line x1="${maxX}" y1="${yLevel-3}" x2="${maxX}" y2="${yLevel+3}" stroke="#999" />`;
+                // Label
+                s += `<text x="${midX}" y="${yLevel - 5}" text-anchor="middle" font-size="10" fill="#666">${formatDiff(diff)}</text>`;
+                return s;
+            };
+
+            // Example comparisons:
+            // A -> C (Start to Start)
+            svg += drawDim(points[0], points[2], dimY);
+            
+            // B -> C (End to Start) - if B exists
+            if (points[1].exists) {
+                svg += drawDim(points[1], points[2], dimY + 20);
+            }
+            
+            // A -> D (Start to End) - if D exists
+            if (points[3].exists) {
+                svg += drawDim(points[0], points[3], dimY + 40);
+            }
+            
+             // B -> D (End to End) - if B and D exist
+            if (points[1].exists && points[3].exists) {
+                svg += drawDim(points[1], points[3], dimY + 60);
+            }
+        }
+
+        svg += `</svg>`;
+        svgContainer.innerHTML = svg;
+        container.appendChild(svgContainer);
+      }
+
+      // Re-render comparison on window resize
+      window.addEventListener('resize', () => {
+        if (selectedEventIds.length >= 2) {
+            renderComparison();
+        }
+      });
+
+      // Modifier Indicator Popup Logic
+      modifierIndicator.addEventListener('mouseenter', () => {
+        if (selectedEventIds.length === 0) {
+            // Show popup
+            const tooltip = document.createElement('div');
+            tooltip.id = 'modifier-tooltip';
+            tooltip.style.position = 'fixed';
+            tooltip.style.top = '25px';
+            tooltip.style.right = '25px';
+            tooltip.style.background = '#333';
+            tooltip.style.color = 'white';
+            tooltip.style.padding = '10px';
+            tooltip.style.borderRadius = '4px';
+            tooltip.style.fontSize = '12px';
+            tooltip.style.zIndex = '10000';
+            tooltip.innerHTML = 'Click events to select.<br>Hold Shift/Ctrl/Alt to select a second event.';
+            document.body.appendChild(tooltip);
+        }
+      });
+      
+      modifierIndicator.addEventListener('mouseleave', () => {
+        const tooltip = document.getElementById('modifier-tooltip');
+        if (tooltip) tooltip.remove();
+      });
+
     </script>
   </body>
 </html>
