@@ -1,0 +1,2563 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title></title>
+    <link rel="icon" type="image/png" href="img/favicon.png" />
+    <link rel="preconnect" href="https://rsms.me/" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+
+    <link
+      href="node_modules/vis-timeline/styles/vis-timeline-graph2d.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link rel="stylesheet" href="node_modules/easymde/dist/easymde.min.css" />
+
+    <!-- must stay with UMD, there is not ESM version -->
+    <script src="node_modules/easymde/dist/easymde.min.js"></script>
+
+    <style type="text/css">
+      .g-inter {
+        font-family: Inter, sans-serif;
+        font-feature-settings: "liga" 1, "calt" 1, /* fix for Chrome */ "zero",
+          "ss01";
+      }
+      :root {
+        font-family: "Inter", sans-serif;
+      }
+      @supports (font-variation-settings: normal) {
+        :root {
+          font-family: "Inter var", sans-serif;
+          font-feature-settings: "liga" 1, "calt" 1, /* fix for Chrome */ "zero",
+            "ss01";
+        }
+      }
+      #visualization {
+        width: 100%;
+        border: 1px solid lightgray;
+      }
+
+      /* Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+      .modal-content {
+        background-color: #fefefe;
+        margin: 20px auto;
+        padding: 30px;
+        border: 1px solid #888;
+        width: 90%;
+        max-width: 1200px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+      }
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      .form-group input[type="text"],
+      .form-group input[type="date"],
+      .form-group input[type="url"] {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .drop-zone {
+        border: 2px dashed #ccc;
+        border-radius: 4px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.3s;
+      }
+      .drop-zone:hover,
+      .drop-zone.dragover {
+        border-color: #666;
+        background-color: #f9f9f9;
+      }
+      .hidden {
+        display: none;
+      }
+      body .vis-tooltip {
+        display: none;
+      }
+      .vis-item {
+        background-color: #428bad;
+        cursor: pointer;
+        /* color: white; */
+      }
+      .vis-item:hover {
+        box-shadow: 0 0 7px rgb(146, 146, 146);
+      }
+      .vis-item-ovegrflow {
+        color: white;
+      }
+      .group-filter-btn {
+        padding: 6px 12px;
+        background: #e0e0e0;
+        color: #333;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s;
+      }
+      .group-filter-btn:hover {
+        background: #d0d0d0;
+      }
+      .group-filter-btn.active {
+        background: #2196f3;
+        color: white;
+        border-color: #1976d2;
+      }
+      .group-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 8px;
+        background: #e3f2fd;
+        color: #1976d2;
+        border-radius: 3px;
+        font-size: 12px;
+      }
+      .group-tag button {
+        background: none;
+        border: none;
+        color: #1976d2;
+        cursor: pointer;
+        padding: 0;
+        font-size: 14px;
+        line-height: 1;
+      }
+      .group-tag button:hover {
+        color: #d32f2f;
+      }
+
+      /* Modifier Key Indicator */
+      #modifierIndicator {
+        position: fixed;
+        top: 3px;
+        right: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: #999;
+        transition: background-color 0.15s ease;
+        z-index: 9999;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      #modifierIndicator.active {
+        background-color: #4caf50;
+      }
+
+      /* Custom Selection Styles */
+      .vis-item.selected-item-1 {
+        border-color: #ff0000 !important;
+        /* background-color: #ffe6e6 !important; */
+        box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        z-index: 2;
+      }
+
+      .vis-item.selected-item-2 {
+        border-color: #0000ff !important;
+        background-color: #e6e6ff !important;
+        box-shadow: 0 0 10px rgba(0, 0, 255, 0.5);
+        z-index: 2;
+      }
+
+      /* Comparison View Styles */
+      #compare {
+        margin-top: 10px;
+      }
+
+      #compare.active {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+        min-height: 50px;
+        position: relative;
+        margin-top: 20px;
+      }
+
+      #compare.instruction {
+        font-size: 13px;
+        color: #666;
+        padding: 5px 0;
+        font-style: italic;
+        min-height: auto;
+        border: none;
+        background: none;
+      }
+
+      .vis-item .vis-item-overflow:hover {
+        overflow: visible;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Modifier Key Indicator Dot -->
+    <div id="modifierIndicator" title="Shift/Ctrl/Alt indicator"></div>
+
+    <div
+      style="
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+      "
+    >
+      <button id="add-event-btn" style="padding: 5px 10px; cursor: pointer">
+        Add Event
+      </button>
+      <a href="https://visjs.github.io/vis-timeline/examples/timeline/">Docs</a>
+      <a href="https://github.com/stopsopa/history">Github</a>
+      <div
+        id="groupFilters"
+        style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"
+      ></div>
+    </div>
+    <div id="visualization"></div>
+    <div id="compare"></div>
+    <div
+      id="eventDetails"
+      style="
+        margin-top: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fafafa;
+        display: none;
+      "
+    >
+      <div
+        style="
+          margin-bottom: 10px;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+        "
+      >
+        <div style="display: flex; gap: 15px; align-items: flex-start">
+          <div
+            id="detailDateContainer"
+            style="
+              display: flex;
+              flex-direction: column;
+              color: #666;
+              font-size: 14px;
+            "
+          >
+            <span id="detailStartDate"></span>
+            <span id="detailEndDate"></span>
+          </div>
+          <div
+            id="detailDuration"
+            style="color: #888; font-size: 13px; font-style: italic"
+          ></div>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <button
+            id="detailEditBtn"
+            style="
+              padding: 6px 12px;
+              background: #4caf50;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Edit
+          </button>
+          <button
+            id="detailDeleteBtn"
+            style="
+              padding: 6px 12px;
+              background: #f44336;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+      <h3 id="detailTitle"></h3>
+      <div id="detailImageContainer" style="margin: 10px 0"></div>
+      <div id="detailContent" style="white-space: pre-wrap"></div>
+    </div>
+
+    <!-- Add Event Modal -->
+    <div id="eventModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Add New Event</h2>
+        <form id="addEventForm" autocomplete="off">
+          <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" required />
+          </div>
+
+          <div class="form-group">
+            <label for="content">Content (Markdown):</label>
+            <textarea id="content" name="content"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label style="font-weight: bold; margin-bottom: 8px; display: block"
+              >Groups:</label
+            >
+            <div
+              id="existingGroupsContainer"
+              style="
+                margin-bottom: 10px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+              "
+            >
+              <!-- Existing groups will be populated here as checkboxes -->
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <input
+                type="text"
+                id="newGroupInput"
+                placeholder="Create new group (e.g., Science, History)"
+                style="
+                  flex: 1;
+                  padding: 8px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              />
+              <button
+                type="button"
+                id="addGroupBtn"
+                style="
+                  padding: 8px 12px;
+                  background: #2196f3;
+                  color: white;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  white-space: nowrap;
+                "
+              >
+                Add Group
+              </button>
+            </div>
+            <div
+              id="selectedGroupsDisplay"
+              style="margin-top: 10px; display: none"
+            >
+              <small style="color: #666">Selected groups:</small>
+              <div
+                id="selectedGroupsList"
+                style="
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 5px;
+                  margin-top: 5px;
+                "
+              >
+                <!-- Selected groups will appear here as tags -->
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label style="font-weight: bold; margin-bottom: 8px; display: block"
+              >Event Color (optional):</label
+            >
+            <div
+              style="
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: wrap;
+              "
+            >
+              <input
+                type="color"
+                id="eventColor"
+                value="#428bad"
+                style="
+                  width: 50px;
+                  height: 35px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                  cursor: pointer;
+                "
+              />
+              <input
+                type="text"
+                id="eventColorText"
+                value="#428bad"
+                placeholder="#428bad"
+                pattern="^#[0-9A-Fa-f]{6}$"
+                style="
+                  width: 90px;
+                  padding: 6px 8px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                  font-family: monospace;
+                "
+              />
+              <button
+                type="button"
+                id="clearColorBtn"
+                style="
+                  padding: 6px 12px;
+                  background: #2196f3;
+                  color: white;
+                  border: none;
+                  border-radius: 4px;
+                  cursor: pointer;
+                  font-size: 13px;
+                  font-weight: 500;
+                  transition: background 0.2s;
+                "
+                onmouseover="this.style.background='#1976D2'"
+                onmouseout="this.style.background='#2196F3'"
+              >
+                Use Default
+              </button>
+              <div
+                id="previousColorsList"
+                style="
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 6px;
+                  align-items: center;
+                "
+              >
+                <!-- Previously used colors will appear here as clickable swatches -->
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="isRange" name="isRange" />
+              Event has duration (Start & End)
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>Start Date:</label>
+            <div style="display: flex; gap: 8px">
+              <input
+                type="number"
+                id="startYearCustom"
+                placeholder="Year (e.g., 1985 or -105)"
+                required
+                style="
+                  flex: 2;
+                  padding: 8px;
+                  font-size: 14px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              />
+              <select
+                id="startMonth"
+                name="startMonth"
+                required
+                style="
+                  flex: 1;
+                  padding: 8px;
+                  font-size: 14px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              >
+                <option value="">-- Month --</option>
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+              <select
+                id="startDay"
+                name="startDay"
+                required
+                style="
+                  flex: 1;
+                  padding: 8px;
+                  font-size: 14px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              >
+                <option value="">-- Day --</option>
+              </select>
+            </div>
+            <div
+              id="startDateError"
+              style="
+                color: red;
+                font-size: 12px;
+                margin-top: 4px;
+                display: none;
+              "
+            ></div>
+          </div>
+
+          <div class="form-group hidden" id="endGroup">
+            <label>End Date:</label>
+            <div style="display: flex; gap: 8px">
+              <input
+                type="number"
+                id="endYearCustom"
+                placeholder="Year (e.g., 1985 or -105)"
+                style="
+                  flex: 2;
+                  padding: 8px;
+                  font-size: 14px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              />
+              <select
+                id="endMonth"
+                name="endMonth"
+                style="
+                  flex: 1;
+                  padding: 8px;
+                  font-size: 14px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              >
+                <option value="">-- Month --</option>
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+              <select
+                id="endDay"
+                name="endDay"
+                style="
+                  flex: 1;
+                  padding: 8px;
+                  font-size: 14px;
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                "
+              >
+                <option value="">-- Day --</option>
+              </select>
+            </div>
+            <div
+              id="endDateError"
+              style="
+                color: red;
+                font-size: 12px;
+                margin-top: 4px;
+                display: none;
+              "
+            ></div>
+          </div>
+
+          <div class="form-group">
+            <div style="display: flex; gap: 20px; align-items: flex-start">
+              <!-- Left side: Radio buttons -->
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 8px;
+                  min-width: 150px;
+                "
+              >
+                <label style="font-weight: bold; margin-bottom: 4px"
+                  >Image:</label
+                >
+                <label
+                  ><input
+                    type="radio"
+                    name="imageSource"
+                    value="none"
+                    checked
+                  />
+                  No Image</label
+                >
+                <label
+                  ><input type="radio" name="imageSource" value="upload" />
+                  Upload File</label
+                >
+                <label
+                  ><input type="radio" name="imageSource" value="url" /> Image
+                  URL</label
+                >
+                <label id="keepImageLabel" style="display: none"
+                  ><input type="radio" name="imageSource" value="keep" /> Keep
+                  previous image</label
+                >
+              </div>
+
+              <!-- Right side: Inputs and Preview -->
+              <div style="flex: 1">
+                <!-- Current Image Preview -->
+                <div
+                  id="currentImagePreview"
+                  style="display: none; margin-bottom: 10px"
+                >
+                  <p style="font-size: 0.9em; color: #666; margin-top: 0">
+                    Current image:
+                  </p>
+                  <img
+                    id="currentImageThumb"
+                    src=""
+                    style="
+                      max-width: 100%;
+                      max-height: 150px;
+                      border: 1px solid #ccc;
+                      border-radius: 4px;
+                    "
+                  />
+                </div>
+
+                <!-- Upload Input -->
+                <div class="hidden" id="uploadGroup">
+                  <div class="drop-zone" id="dropZone" style="margin-top: 0">
+                    <p>Drag & Drop image here or click to select</p>
+                    <input
+                      type="file"
+                      id="imageFile"
+                      name="imageFile"
+                      accept="image/*"
+                      style="display: none"
+                    />
+                    <p id="fileName" style="font-size: 0.9em; color: #666"></p>
+                  </div>
+                </div>
+
+                <!-- URL Input -->
+                <div class="hidden" id="urlGroup">
+                  <input
+                    type="url"
+                    id="imageUrl"
+                    name="imageUrl"
+                    placeholder="https://example.com/image.jpg"
+                    style="width: 100%; box-sizing: border-box"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            id="errorMessage"
+            style="color: red; margin-bottom: 15px; display: none"
+          ></div>
+
+          <button
+            type="submit"
+            style="
+              padding: 8px 16px;
+              background-color: #4caf50;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Create Event
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+      <div class="modal-content" style="max-width: 600px">
+        <span class="close" id="deleteCloseBtn">&times;</span>
+        <h2>Confirm Delete</h2>
+        <p>Are you sure you want to delete this event?</p>
+
+        <div
+          id="deleteEventDetails"
+          style="
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+          "
+        >
+          <h3 id="deleteEventTitle" style="margin-top: 0"></h3>
+          <div id="deleteEventImage" style="margin: 10px 0"></div>
+          <div
+            id="deleteEventContent"
+            style="white-space: pre-wrap; color: #666"
+          ></div>
+          <div
+            id="deleteEventDate"
+            style="margin-top: 10px; font-size: 0.9em; color: #888"
+          ></div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end">
+          <button
+            id="cancelDeleteBtn"
+            style="
+              padding: 8px 16px;
+              background-color: #ccc;
+              color: black;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Cancel
+          </button>
+          <button
+            id="confirmDeleteBtn"
+            style="
+              padding: 8px 16px;
+              background-color: #f44336;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import {
+        Timeline,
+        DataSet,
+      } from "./node_modules/vis-timeline/dist/vis-timeline-graph2d.esm.js";
+      import { marked } from "./node_modules/marked/lib/marked.esm.js";
+      import { autocolors } from "./color/experiment5.js";
+      import {
+        formatDateForDisplay,
+        calculateDuration,
+      } from "./lib/dateUtils.js";
+
+      // Initialize auto-colors for timeline items
+      autocolors("[data-id]");
+
+      {
+        let globalId;
+        // Width preservation on hover: measure, then inject dynamic style rule
+        const hoverStyleElement = document.createElement("style");
+        document.head.appendChild(hoverStyleElement);
+
+        document.body.addEventListener(
+          "mouseenter",
+          (e) => {
+            if (e.target.hasAttribute("data-id")) {
+              const currentId = (globalId = e.target.getAttribute("data-id"));
+              const currentWidth = e.target.offsetWidth;
+
+              // Update style content
+              console.log(
+                (hoverStyleElement.textContent = `[data-id="${currentId}"] { width: auto !important; }`)
+              );
+
+              setTimeout(() => {
+                if (globalId !== currentId) return;
+
+                const autoWidth = e.target.offsetWidth;
+
+                console.log(
+                  "currentWidth",
+                  currentWidth,
+                  "autoWidth",
+                  autoWidth
+                );
+
+                hoverStyleElement.textContent = "";
+
+                setTimeout(() => {
+                  if (globalId !== currentId) return;
+
+                  if (autoWidth > currentWidth) {
+                    hoverStyleElement.textContent = `[data-id="${currentId}"] { width: ${autoWidth}px !important; }`;
+                  }
+                }, 50);
+              }, 50);
+            }
+          },
+          true
+        );
+
+        document.body.addEventListener(
+          "mouseleave",
+          (e) => {
+            if (e.target.hasAttribute("data-id")) {
+              hoverStyleElement.textContent = "";
+            }
+          },
+          true
+        );
+      }
+
+      const container = document.getElementById("visualization");
+      const addEventBtn = document.getElementById("add-event-btn");
+      const modal = document.getElementById("eventModal");
+      const closeBtn = document.getElementsByClassName("close")[0];
+      const form = document.getElementById("addEventForm");
+      const isRangeCheckbox = document.getElementById("isRange");
+      const endGroup = document.getElementById("endGroup");
+      const imageSourceRadios = document.getElementsByName("imageSource");
+      const uploadGroup = document.getElementById("uploadGroup");
+      const urlGroup = document.getElementById("urlGroup");
+      const dropZone = document.getElementById("dropZone");
+      const imageInput = document.getElementById("imageFile");
+      const fileNameDisplay = document.getElementById("fileName");
+
+      let timeline;
+      let items;
+      let easyMDE;
+      let allEvents = []; // Store all events for filtering
+      let selectedGroups = new Set(); // Track selected groups in the form
+      let activeFilters = new Set(); // Track active filter buttons
+
+      // Modifier Key Indicator
+      const modifierIndicator = document.getElementById("modifierIndicator");
+
+      function updateModifierIndicator(event) {
+        const isModifierPressed =
+          event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
+        if (isModifierPressed) {
+          modifierIndicator.classList.add("active");
+        } else {
+          modifierIndicator.classList.remove("active");
+        }
+      }
+
+      // Track modifier keys on keydown and keyup
+      document.addEventListener("keydown", updateModifierIndicator);
+      document.addEventListener("keyup", updateModifierIndicator);
+
+      // Also track on mouse events to catch modifier keys held while clicking
+      document.addEventListener("mousemove", updateModifierIndicator);
+      document.addEventListener("mousedown", updateModifierIndicator);
+      document.addEventListener("mouseup", updateModifierIndicator);
+
+      // Reset indicator when window loses focus
+      window.addEventListener("blur", () => {
+        modifierIndicator.classList.remove("active");
+      });
+
+      // Group Management Functions
+      function getAllUniqueGroups() {
+        const groupsSet = new Set();
+        allEvents.forEach((event) => {
+          if (event.group && Array.isArray(event.group)) {
+            event.group.forEach((g) => groupsSet.add(g));
+          }
+        });
+        return Array.from(groupsSet).sort();
+      }
+
+      function renderGroupCheckboxes() {
+        const container = document.getElementById("existingGroupsContainer");
+        const uniqueGroups = getAllUniqueGroups();
+
+        container.innerHTML = "";
+
+        if (uniqueGroups.length === 0) {
+          container.innerHTML =
+            '<small style="color: #999;">No groups yet. Create one below.</small>';
+          return;
+        }
+
+        uniqueGroups.forEach((group) => {
+          const label = document.createElement("label");
+          label.style.display = "flex";
+          label.style.alignItems = "center";
+          label.style.gap = "4px";
+          label.style.cursor = "pointer";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.value = group;
+          checkbox.checked = selectedGroups.has(group);
+          checkbox.addEventListener("change", (e) => {
+            if (e.target.checked) {
+              selectedGroups.add(group);
+            } else {
+              selectedGroups.delete(group);
+            }
+            updateSelectedGroupsDisplay();
+          });
+
+          label.appendChild(checkbox);
+          label.appendChild(document.createTextNode(group));
+          container.appendChild(label);
+        });
+      }
+
+      function updateSelectedGroupsDisplay() {
+        const display = document.getElementById("selectedGroupsDisplay");
+        const list = document.getElementById("selectedGroupsList");
+
+        if (selectedGroups.size === 0) {
+          display.style.display = "none";
+          return;
+        }
+
+        display.style.display = "block";
+        list.innerHTML = "";
+
+        selectedGroups.forEach((group) => {
+          const tag = document.createElement("div");
+          tag.className = "group-tag";
+          tag.innerHTML = `
+            <span>${group}</span>
+            <button type="button" data-group="${group}">×</button>
+          `;
+          tag.querySelector("button").addEventListener("click", () => {
+            selectedGroups.delete(group);
+            renderGroupCheckboxes();
+            updateSelectedGroupsDisplay();
+          });
+          list.appendChild(tag);
+        });
+      }
+
+      // Add group button handler
+      document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("addGroupBtn").addEventListener("click", () => {
+          const input = document.getElementById("newGroupInput");
+          const groupName = input.value.trim();
+
+          if (groupName) {
+            selectedGroups.add(groupName);
+            input.value = "";
+            renderGroupCheckboxes();
+            updateSelectedGroupsDisplay();
+          }
+        });
+
+        // Allow Enter key to add group
+        document
+          .getElementById("newGroupInput")
+          .addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              document.getElementById("addGroupBtn").click();
+            }
+          });
+
+        // Color picker synchronization
+        const colorPicker = document.getElementById("eventColor");
+        const colorText = document.getElementById("eventColorText");
+        const clearColorBtn = document.getElementById("clearColorBtn");
+
+        // Track if user wants to use default (no custom color)
+        let useDefaultColor = true;
+
+        // Sync color picker to text input
+        colorPicker.addEventListener("input", (e) => {
+          colorText.value = e.target.value;
+          useDefaultColor = false; // User is selecting a custom color
+        });
+
+        // Sync text input to color picker
+        colorText.addEventListener("input", (e) => {
+          const value = e.target.value;
+          if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+            colorPicker.value = value;
+            useDefaultColor = false; // User is selecting a custom color
+          }
+        });
+
+        // Clear color button - reset to default (don't send color field)
+        clearColorBtn.addEventListener("click", () => {
+          colorPicker.value = "#428bad";
+          colorText.value = "#428bad";
+          useDefaultColor = true; // User wants to use default
+        });
+
+        // Make useDefaultColor accessible globally for form submission
+        window.useDefaultColor = () => useDefaultColor;
+        window.setCustomColor = () => {
+          useDefaultColor = false;
+        };
+      });
+
+      // Color Management Functions
+      function getAllUniqueColors() {
+        const colorsSet = new Set();
+        allEvents.forEach((event) => {
+          if (event.color && /^#[0-9A-Fa-f]{6}$/i.test(event.color)) {
+            colorsSet.add(event.color.toLowerCase());
+          }
+        });
+        return Array.from(colorsSet);
+      }
+
+      function renderPreviousColors() {
+        const list = document.getElementById("previousColorsList");
+        const uniqueColors = getAllUniqueColors();
+
+        list.innerHTML = "";
+
+        if (uniqueColors.length === 0) {
+          return;
+        }
+
+        uniqueColors.forEach((color) => {
+          const swatch = document.createElement("div");
+          swatch.style.cssText = `
+            width: 27px;
+            height: 27px;
+            background-color: ${color};
+            border: 2px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+          `;
+          swatch.title = color;
+
+          swatch.addEventListener("mouseenter", () => {
+            swatch.style.transform = "scale(1.15)";
+            swatch.style.borderColor = "#666";
+          });
+
+          swatch.addEventListener("mouseleave", () => {
+            swatch.style.transform = "scale(1)";
+            swatch.style.borderColor = "#ccc";
+          });
+
+          swatch.addEventListener("click", () => {
+            document.getElementById("eventColor").value = color;
+            document.getElementById("eventColorText").value = color;
+            // Mark as custom color selection
+            if (window.setCustomColor) {
+              window.setCustomColor();
+            }
+            // Visual feedback
+            swatch.style.borderColor = "#2196F3";
+            setTimeout(() => {
+              swatch.style.borderColor = "#ccc";
+            }, 300);
+          });
+
+          list.appendChild(swatch);
+        });
+      }
+
+      function renderGroupFilters() {
+        const container = document.getElementById("groupFilters");
+        const uniqueGroups = getAllUniqueGroups();
+
+        container.innerHTML = "";
+
+        if (
+          uniqueGroups.length === 0 &&
+          allEvents.every((e) => !e.group || e.group.length === 0)
+        ) {
+          return; // No groups and no ungrouped events, don't show filters
+        }
+
+        // Add "No Group" button if there are events without groups
+        const hasUngrouped = allEvents.some(
+          (e) => !e.group || e.group.length === 0
+        );
+        if (hasUngrouped) {
+          const noGroupBtn = document.createElement("button");
+          noGroupBtn.className = "group-filter-btn";
+          noGroupBtn.textContent = "No Group";
+          noGroupBtn.dataset.group = "__NO_GROUP__";
+          noGroupBtn.addEventListener("click", () =>
+            toggleFilter("__NO_GROUP__")
+          );
+          container.appendChild(noGroupBtn);
+        }
+
+        // Add button for each group
+        uniqueGroups.forEach((group) => {
+          const btn = document.createElement("button");
+          btn.className = "group-filter-btn";
+          btn.textContent = group;
+          btn.dataset.group = group;
+          btn.addEventListener("click", () => toggleFilter(group));
+          container.appendChild(btn);
+        });
+      }
+
+      function toggleFilter(group) {
+        if (activeFilters.has(group)) {
+          activeFilters.delete(group);
+        } else {
+          activeFilters.add(group);
+        }
+
+        // Update button states
+        document.querySelectorAll(".group-filter-btn").forEach((btn) => {
+          if (activeFilters.has(btn.dataset.group)) {
+            btn.classList.add("active");
+          } else {
+            btn.classList.remove("active");
+          }
+        });
+
+        applyFilters();
+      }
+
+      function applyFilters() {
+        if (!timeline || !items) return;
+
+        // If no filters active, show all events
+        if (activeFilters.size === 0) {
+          const allItems = allEvents.map((event) => {
+            const processed = { ...event };
+            if (event.start) {
+              processed.start = parseDateString(event.start);
+            }
+            if (event.end) {
+              processed.end = parseDateString(event.end);
+            } else {
+              processed.type = "point";
+            }
+            // Apply color styling if color is specified
+            if (event.color && /^#[0-9A-Fa-f]{6}$/i.test(event.color)) {
+              processed.style = `background-color: ${event.color};`;
+            }
+            return processed;
+          });
+          items.clear();
+          items.add(allItems);
+          return;
+        }
+
+        // Filter events based on active filters
+        const filteredEvents = allEvents.filter((event) => {
+          // Check if "No Group" filter is active
+          if (activeFilters.has("__NO_GROUP__")) {
+            if (!event.group || event.group.length === 0) {
+              return true;
+            }
+          }
+
+          // Check if event has any of the active group filters
+          if (event.group && Array.isArray(event.group)) {
+            return event.group.some((g) => activeFilters.has(g));
+          }
+
+          return false;
+        });
+
+        const processedFiltered = filteredEvents.map((event) => {
+          const processed = { ...event };
+          if (event.start) {
+            processed.start = parseDateString(event.start);
+          }
+          if (event.end) {
+            processed.end = parseDateString(event.end);
+          } else {
+            processed.type = "point";
+          }
+          // Apply color styling if color is specified
+          if (event.color && /^#[0-9A-Fa-f]{6}$/i.test(event.color)) {
+            processed.style = `background-color: ${event.color};`;
+          }
+          return processed;
+        });
+
+        items.clear();
+        items.add(processedFiltered);
+      }
+
+      // Initialize EasyMDE Markdown Editor
+      document.addEventListener("DOMContentLoaded", function () {
+        easyMDE = new EasyMDE({
+          element: document.getElementById("content"),
+          spellChecker: false,
+          toolbar: [
+            "bold",
+            "italic",
+            "heading",
+            "|",
+            "quote",
+            "unordered-list",
+            "ordered-list",
+            "|",
+            "link",
+            "image",
+            "|",
+            "preview",
+            "side-by-side",
+            "fullscreen",
+            "|",
+            "guide",
+          ],
+          status: false,
+          minHeight: "200px",
+        });
+      });
+
+      // Populate day dropdowns (1-31)
+      function populateDays(selectElement) {
+        selectElement.innerHTML = '<option value="">-- Day --</option>';
+        for (let i = 1; i <= 31; i++) {
+          const option = document.createElement("option");
+          option.value = String(i).padStart(2, "0");
+          option.textContent = i;
+          selectElement.appendChild(option);
+        }
+      }
+
+      populateDays(document.getElementById("startDay"));
+      populateDays(document.getElementById("endDay"));
+
+      // Date validation function
+      function validateDate(year, month, day, errorElementId) {
+        const errorDiv = document.getElementById(errorElementId);
+
+        // Check if all fields are filled
+        if (!year || !month || !day) {
+          errorDiv.textContent = "Please fill all date fields";
+          errorDiv.style.display = "block";
+          return false;
+        }
+
+        // Try to create a date object
+        try {
+          // Handle BCE dates (negative years)
+          const yearNum = parseInt(year);
+          const monthNum = parseInt(month);
+          const dayNum = parseInt(day);
+
+          // For CE dates, use JavaScript Date object for validation
+          if (yearNum > 0) {
+            const date = new Date(yearNum, monthNum - 1, dayNum);
+
+            // Check if the date is valid (JavaScript Date auto-corrects invalid dates)
+            if (
+              date.getFullYear() !== yearNum ||
+              date.getMonth() !== monthNum - 1 ||
+              date.getDate() !== dayNum
+            ) {
+              errorDiv.textContent = `Invalid date: ${month} does not have ${day} days in year ${year}`;
+              errorDiv.style.display = "block";
+              return false;
+            }
+          } else {
+            // For BCE dates, do basic validation
+            const daysInMonth = [
+              31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+            ];
+
+            // Check for leap year (works for BCE too)
+            const absYear = Math.abs(yearNum);
+            const isLeap =
+              (absYear % 4 === 0 && absYear % 100 !== 0) || absYear % 400 === 0;
+            if (isLeap && monthNum === 2) {
+              daysInMonth[1] = 29;
+            }
+
+            if (dayNum > daysInMonth[monthNum - 1]) {
+              errorDiv.textContent = `Invalid date: Month ${month} does not have ${day} days`;
+              errorDiv.style.display = "block";
+              return false;
+            }
+          }
+
+          errorDiv.style.display = "none";
+          return true;
+        } catch (e) {
+          errorDiv.textContent = "Invalid date";
+          errorDiv.style.display = "block";
+          return false;
+        }
+      }
+
+      // Add event listeners for start date validation
+      const startYearInput = document.getElementById("startYearCustom");
+      const startMonthSelect = document.getElementById("startMonth");
+      const startDaySelect = document.getElementById("startDay");
+
+      startYearInput.addEventListener("input", () => {
+        validateDate(
+          startYearInput.value,
+          startMonthSelect.value,
+          startDaySelect.value,
+          "startDateError"
+        );
+      });
+      startMonthSelect.addEventListener("change", () => {
+        validateDate(
+          startYearInput.value,
+          startMonthSelect.value,
+          startDaySelect.value,
+          "startDateError"
+        );
+      });
+      startDaySelect.addEventListener("change", () => {
+        validateDate(
+          startYearInput.value,
+          startMonthSelect.value,
+          startDaySelect.value,
+          "startDateError"
+        );
+      });
+
+      // Add event listeners for end date validation
+      const endYearInput = document.getElementById("endYearCustom");
+      const endMonthSelect = document.getElementById("endMonth");
+      const endDaySelect = document.getElementById("endDay");
+
+      endYearInput.addEventListener("input", () => {
+        if (isRangeCheckbox.checked) {
+          validateDate(
+            endYearInput.value,
+            endMonthSelect.value,
+            endDaySelect.value,
+            "endDateError"
+          );
+        }
+      });
+      endMonthSelect.addEventListener("change", () => {
+        if (isRangeCheckbox.checked) {
+          validateDate(
+            endYearInput.value,
+            endMonthSelect.value,
+            endDaySelect.value,
+            "endDateError"
+          );
+        }
+      });
+      endDaySelect.addEventListener("change", () => {
+        if (isRangeCheckbox.checked) {
+          validateDate(
+            endYearInput.value,
+            endMonthSelect.value,
+            endDaySelect.value,
+            "endDateError"
+          );
+        }
+      });
+
+      // Modal Logic
+      addEventBtn.onclick = function () {
+        modal.style.display = "block";
+
+        // Reset modal title for adding new event
+        document.querySelector("#eventModal h2").textContent = "Add New Event";
+        document.querySelector('button[type="submit"]').textContent =
+          "Create Event";
+        currentEditId = null;
+
+        // Reset form to clear all previous values
+        form.reset();
+
+        // Clear selected groups
+        selectedGroups.clear();
+        renderGroupCheckboxes();
+        updateSelectedGroupsDisplay();
+
+        // Render previous colors
+        renderPreviousColors();
+
+        // Reset color to default and set flag
+        document.getElementById("eventColor").value = "#428bad";
+        document.getElementById("eventColorText").value = "#428bad";
+        if (window.setCustomColor) {
+          // Reset to using default (not custom)
+          window.useDefaultColor = () => true;
+        }
+
+        // Clear any error messages
+        document.getElementById("errorMessage").style.display = "none";
+        document.getElementById("startDateError").style.display = "none";
+        document.getElementById("endDateError").style.display = "none";
+
+        // Set default date to today
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+        const day = String(today.getDate()).padStart(2, "0");
+
+        document.getElementById("startYearCustom").value = year;
+        document.getElementById("startMonth").value = month;
+        document.getElementById("startDay").value = day;
+
+        // Ensure checkbox is unchecked and end date is hidden
+        isRangeCheckbox.checked = false;
+        endGroup.classList.add("hidden");
+
+        // Clear EasyMDE editor
+        if (easyMDE) {
+          easyMDE.value("");
+        }
+      };
+
+      // Delete Modal Functions
+      const deleteModal = document.getElementById("deleteModal");
+      const deleteCloseBtn = document.getElementById("deleteCloseBtn");
+      const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+      const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+      let currentDeleteId = null;
+
+      function openDeleteModal(eventId) {
+        const event = items.get(eventId);
+        if (!event) return;
+
+        currentDeleteId = eventId;
+
+        // Populate delete modal with event details
+        document.getElementById("deleteEventTitle").textContent = event.title;
+        document.getElementById("deleteEventContent").textContent =
+          event.content || "No description";
+
+        // Show image if exists
+        const imageDiv = document.getElementById("deleteEventImage");
+        imageDiv.innerHTML = "";
+        if (event.image) {
+          const img = document.createElement("img");
+          img.src = event.image;
+          img.style.maxWidth = "200px";
+          img.style.maxHeight = "150px";
+          img.style.borderRadius = "4px";
+          imageDiv.appendChild(img);
+        }
+
+        // Show date
+        const startStr = formatDateToString(event.start);
+        const endStr = event.end ? formatDateToString(event.end) : null;
+        const dateText = endStr ? `${startStr} to ${endStr}` : startStr;
+        document.getElementById(
+          "deleteEventDate"
+        ).textContent = `Date: ${dateText}`;
+
+        deleteModal.style.display = "block";
+      }
+
+      deleteCloseBtn.onclick = function () {
+        deleteModal.style.display = "none";
+        currentDeleteId = null;
+      };
+
+      cancelDeleteBtn.onclick = function () {
+        deleteModal.style.display = "none";
+        currentDeleteId = null;
+      };
+
+      confirmDeleteBtn.onclick = function () {
+        if (!currentDeleteId) return;
+
+        // If called from vis-timeline native button, use the callback
+        if (window.pendingDeleteCallback) {
+          window.pendingDeleteCallback(window.pendingDeleteItem);
+          window.pendingDeleteCallback = null;
+          window.pendingDeleteItem = null;
+          deleteModal.style.display = "none";
+          currentDeleteId = null;
+          saveEvents();
+        } else {
+          // If called from custom button (fallback), use fetch
+          fetch(`/api/events/${currentDeleteId}`, {
+            method: "DELETE",
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                deleteModal.style.display = "none";
+                currentDeleteId = null;
+                loadEvents(); // Reload timeline
+              } else {
+                alert(
+                  "Error deleting event: " + (data.error || "Unknown error")
+                );
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Error deleting event");
+            });
+        }
+      };
+
+      // Edit Modal Functions
+      let currentEditId = null;
+
+      function openEditModal(eventId) {
+        const event = items.get(eventId);
+        if (!event) return;
+
+        currentEditId = eventId;
+
+        // Change modal title
+        document.querySelector("#eventModal h2").textContent = "Edit Event";
+        document.querySelector('button[type="submit"]').textContent =
+          "Update Event";
+
+        // Populate title
+        document.getElementById("title").value = event.title || "";
+
+        // Populate content in EasyMDE
+        if (easyMDE) {
+          easyMDE.value(event.content || "");
+        }
+
+        // Populate groups
+        selectedGroups.clear();
+        const rawEvent = allEvents.find((e) => e.id === eventId);
+        if (rawEvent && rawEvent.group && Array.isArray(rawEvent.group)) {
+          rawEvent.group.forEach((g) => selectedGroups.add(g));
+        }
+        renderGroupCheckboxes();
+        updateSelectedGroupsDisplay();
+
+        // Render previous colors
+        renderPreviousColors();
+
+        // Populate color if exists, otherwise use default
+        const eventColor =
+          rawEvent && rawEvent.color ? rawEvent.color : "#428bad";
+        document.getElementById("eventColor").value = eventColor;
+        document.getElementById("eventColorText").value = eventColor;
+
+        // Set the custom color flag based on whether event has a color
+        if (window.useDefaultColor) {
+          if (rawEvent && rawEvent.color) {
+            window.useDefaultColor = () => false; // Event has custom color
+          } else {
+            window.useDefaultColor = () => true; // Event uses default
+          }
+        }
+
+        // Parse and populate start date
+        if (event.start) {
+          // Convert Date object to string if needed
+          const startStr = formatDateToString(event.start);
+          // Use regex to handle BC dates (negative years)
+          const startMatch = startStr.match(/^(-?\d+)-(\d+)-(\d+)/);
+          if (startMatch) {
+            document.getElementById("startYearCustom").value = startMatch[1];
+            document.getElementById("startMonth").value = startMatch[2];
+            document.getElementById("startDay").value = startMatch[3];
+          }
+        }
+
+        // Handle end date if exists
+        if (event.end) {
+          isRangeCheckbox.checked = true;
+          endGroup.classList.remove("hidden");
+          // Convert Date object to string if needed
+          const endStr = formatDateToString(event.end);
+          // Use regex to handle BC dates (negative years)
+          const endMatch = endStr.match(/^(-?\d+)-(\d+)-(\d+)/);
+          if (endMatch) {
+            document.getElementById("endYearCustom").value = endMatch[1];
+            document.getElementById("endMonth").value = endMatch[2];
+            document.getElementById("endDay").value = endMatch[3];
+          }
+        } else {
+          isRangeCheckbox.checked = false;
+          endGroup.classList.add("hidden");
+        }
+
+        // Handle image options
+        const keepImageLabel = document.getElementById("keepImageLabel");
+        const currentImagePreview = document.getElementById(
+          "currentImagePreview"
+        );
+        const currentImageThumb = document.getElementById("currentImageThumb");
+
+        if (event.image) {
+          // Show "Keep previous image" option
+          keepImageLabel.style.display = "inline";
+          currentImagePreview.style.display = "block";
+          currentImageThumb.src = event.image;
+
+          // Select "Keep previous image" by default
+          document.querySelector(
+            'input[name="imageSource"][value="keep"]'
+          ).checked = true;
+          uploadGroup.classList.add("hidden");
+          urlGroup.classList.add("hidden");
+        } else {
+          // No existing image, hide "Keep previous image" option
+          keepImageLabel.style.display = "none";
+          currentImagePreview.style.display = "none";
+
+          // Select "No Image" by default
+          document.querySelector(
+            'input[name="imageSource"][value="none"]'
+          ).checked = true;
+          uploadGroup.classList.add("hidden");
+          urlGroup.classList.add("hidden");
+        }
+
+        modal.style.display = "block";
+
+        // Refresh EasyMDE to ensure it renders correctly
+        if (easyMDE) {
+          setTimeout(() => {
+            easyMDE.codemirror.refresh();
+          }, 10);
+        }
+      }
+
+      closeBtn.onclick = function () {
+        modal.style.display = "none";
+      };
+
+      window.onclick = function (event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      };
+
+      // Toggle end date visibility and copy start date values
+      isRangeCheckbox.onchange = function () {
+        if (this.checked) {
+          endGroup.classList.remove("hidden");
+          // Copy start date values to end date
+          document.getElementById("endYearCustom").value =
+            document.getElementById("startYearCustom").value;
+          document.getElementById("endMonth").value =
+            document.getElementById("startMonth").value;
+          document.getElementById("endDay").value =
+            document.getElementById("startDay").value;
+        } else {
+          endGroup.classList.add("hidden");
+        }
+      };
+
+      imageSourceRadios.forEach((radio) => {
+        radio.onchange = function () {
+          if (this.value === "upload") {
+            uploadGroup.classList.remove("hidden");
+            urlGroup.classList.add("hidden");
+          } else if (this.value === "url") {
+            uploadGroup.classList.add("hidden");
+            urlGroup.classList.remove("hidden");
+          } else {
+            uploadGroup.classList.add("hidden");
+            urlGroup.classList.add("hidden");
+          }
+        };
+      });
+
+      // Drag & Drop
+      dropZone.onclick = () => imageInput.click();
+
+      imageInput.onchange = function () {
+        if (this.files.length > 0) {
+          fileNameDisplay.textContent = this.files[0].name;
+        }
+      };
+
+      dropZone.ondragover = function (e) {
+        e.preventDefault();
+        this.classList.add("dragover");
+      };
+
+      dropZone.ondragleave = function () {
+        this.classList.remove("dragover");
+      };
+
+      dropZone.ondrop = function (e) {
+        e.preventDefault();
+        this.classList.remove("dragover");
+        if (e.dataTransfer.files.length > 0) {
+          imageInput.files = e.dataTransfer.files;
+          fileNameDisplay.textContent = e.dataTransfer.files[0].name;
+        }
+      };
+
+      // Form Submission
+      form.onsubmit = function (e) {
+        e.preventDefault();
+
+        // Construct start date from inputs
+        const startYear = document.getElementById("startYearCustom").value;
+        const startMonth = document.getElementById("startMonth").value;
+        const startDay = document.getElementById("startDay").value;
+
+        // Validate start date
+        if (!validateDate(startYear, startMonth, startDay, "startDateError")) {
+          return; // Don't submit if start date is invalid
+        }
+
+        const startDate = `${startYear}-${startMonth}-${startDay}`;
+
+        // Construct end date if range is checked
+        let endDate = null;
+        if (isRangeCheckbox.checked) {
+          const endYear = document.getElementById("endYearCustom").value;
+          const endMonth = document.getElementById("endMonth").value;
+          const endDay = document.getElementById("endDay").value;
+          if (endYear && endMonth && endDay) {
+            // Validate end date
+            if (!validateDate(endYear, endMonth, endDay, "endDateError")) {
+              return; // Don't submit if end date is invalid
+            }
+            endDate = `${endYear}-${endMonth}-${endDay}`;
+          }
+        }
+
+        const formData = new FormData();
+        formData.append("title", document.getElementById("title").value);
+
+        // Get markdown content from EasyMDE
+        let markdownContent = "";
+        if (easyMDE) {
+          markdownContent = easyMDE.value();
+        }
+        formData.append("content", markdownContent);
+
+        // Add groups if any selected
+        if (selectedGroups.size > 0) {
+          formData.append("group", JSON.stringify(Array.from(selectedGroups)));
+        }
+
+        // Add color only if user has explicitly selected a custom color
+        const selectedColor = document.getElementById("eventColorText").value;
+        const isUsingDefault = window.useDefaultColor
+          ? window.useDefaultColor()
+          : true;
+        if (
+          !isUsingDefault &&
+          selectedColor &&
+          /^#[0-9A-Fa-f]{6}$/i.test(selectedColor)
+        ) {
+          formData.append("color", selectedColor.toLowerCase());
+        }
+
+        formData.append("start", startDate);
+        if (endDate) {
+          formData.append("end", endDate);
+        }
+        // Don't send type - it will be auto-added in UI based on presence of end date
+
+        const imageSource = document.querySelector(
+          'input[name="imageSource"]:checked'
+        ).value;
+        formData.append("imageSource", imageSource);
+
+        if (imageSource === "upload") {
+          const fileInput = document.getElementById("imageFile");
+          if (fileInput.files[0]) {
+            formData.append("imageFile", fileInput.files[0]);
+          }
+        } else if (imageSource === "url") {
+          formData.append(
+            "imageUrl",
+            document.getElementById("imageUrl").value
+          );
+        }
+
+        const errorDiv = document.getElementById("errorMessage");
+        errorDiv.style.display = "none";
+        errorDiv.textContent = "";
+
+        const url = currentEditId
+          ? `/api/events/${currentEditId}`
+          : "/api/events/create";
+        const method = currentEditId ? "PUT" : "POST";
+
+        fetch(url, {
+          method: method,
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              console.log("Success:", data);
+              modal.style.display = "none";
+              form.reset();
+              fileNameDisplay.textContent = "";
+              currentEditId = null; // Reset edit ID
+              // Reload events
+              loadEvents();
+            } else {
+              errorDiv.textContent = "Error: " + data.error;
+              errorDiv.style.display = "block";
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            errorDiv.textContent = "Network or Server Error";
+            errorDiv.style.display = "block";
+          });
+      };
+
+      // Helper function to parse date strings including BC dates
+      function parseDateString(dateStr) {
+        if (!dateStr) return null;
+
+        const match = dateStr.match(/^(-?\d+)-(\d+)-(\d+)/);
+        if (!match) return null;
+
+        const year = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10) - 1; // JS months are 0-indexed
+        const day = parseInt(match[3], 10);
+
+        // For BC dates (negative years), create a date and set the year manually
+        if (year < 0) {
+          const date = new Date(0, month, day);
+          date.setFullYear(year);
+          return date;
+        }
+
+        // For CE dates, use standard Date constructor
+        return new Date(year, month, day);
+      }
+
+      // Render event details functions
+      function renderEventDetails(ev) {
+        if (!ev) return;
+        document.getElementById("detailTitle").textContent = ev.title || "";
+        const imgDiv = document.getElementById("detailImageContainer");
+        imgDiv.innerHTML = "";
+        if (ev.image) {
+          const img = document.createElement("img");
+          img.src = ev.image;
+          img.style.maxWidth = "300px";
+          img.style.borderRadius = "4px";
+          imgDiv.appendChild(img);
+        }
+        const contentDiv = document.getElementById("detailContent");
+        const markdown = ev.content || "";
+        contentDiv.innerHTML = marked.parse(markdown);
+
+        // Format and display date(s)
+        const startDateSpan = document.getElementById("detailStartDate");
+        const endDateSpan = document.getElementById("detailEndDate");
+        const durationSpan = document.getElementById("detailDuration");
+
+        if (ev.start) {
+          const startStr = formatDateToString(ev.start);
+          startDateSpan.textContent = formatDateForDisplay(startStr);
+        } else {
+          startDateSpan.textContent = "";
+        }
+
+        if (ev.end) {
+          const endStr = formatDateToString(ev.end);
+          endDateSpan.textContent = formatDateForDisplay(endStr);
+          // Calculate and display duration
+          const startStr = formatDateToString(ev.start);
+          const duration = calculateDuration(startStr, endStr);
+          durationSpan.textContent = duration ? `(${duration})` : "";
+        } else {
+          endDateSpan.textContent = "";
+          durationSpan.textContent = "";
+        }
+
+        document.getElementById("detailEditBtn").onclick = function () {
+          openEditModal(ev.id);
+        };
+        document.getElementById("detailDeleteBtn").onclick = function () {
+          openDeleteModal(ev.id);
+        };
+        document.getElementById("eventDetails").style.display = "block";
+      }
+
+      function clearEventDetails() {
+        document.getElementById("eventDetails").style.display = "none";
+      }
+
+      function loadEvents() {
+        fetch("events.json")
+          .then((response) => response.json())
+          .then((data) => {
+            // Store raw events for filtering
+            allEvents = data;
+
+            // Render group checkboxes and filter buttons
+            renderGroupCheckboxes();
+            renderGroupFilters();
+
+            // Preprocess events: add type="point" for events with only start date
+            // and convert date strings to Date objects for vis-timeline
+            const processedData = data.map((event) => {
+              const processed = { ...event };
+
+              // Convert start date string to Date object
+              if (event.start) {
+                processed.start = parseDateString(event.start);
+              }
+
+              // Convert end date string to Date object
+              if (event.end) {
+                processed.end = parseDateString(event.end);
+              } else {
+                // Add type="point" for events with only start date
+                processed.type = "point";
+              }
+
+              // Apply color styling if color is specified
+              if (event.color && /^#[0-9A-Fa-f]{6}$/i.test(event.color)) {
+                processed.style = `background-color: ${event.color};`;
+              }
+
+              return processed;
+            });
+
+            items = new DataSet(processedData);
+            if (timeline) {
+              timeline.setItems(items);
+            } else {
+              createTimeline();
+            }
+          });
+      }
+
+      function createTimeline() {
+        const options = {
+          dataAttributes: ["id"], // Expose data-id attribute on timeline items
+          tooltip: {
+            followMouse: false,
+            overflowMethod: "none",
+          },
+          editable: {
+            add: false, // Disable adding via double-click
+            updateTime: false, // Disable moving/dragging items
+            updateGroup: false, // Disable group changes
+            remove: false, // Disable native delete button (we use custom UI),
+
+            overrideItems: false,
+          },
+          selectable: false, // Disable default selection to use custom logic
+          template: function (item, element, data) {
+            const container = document.createElement("span");
+            container.style.display = "flex";
+            container.style.alignItems = "center";
+            container.style.gap = "5px";
+            // Add data-id for custom selection logic
+            container.dataset.id = item.id;
+
+            if (item.image) {
+              const img = document.createElement("img");
+              // Try thumbnail first, fallback to original
+              const thumbPath = item.image.replace("img/", "thumb/");
+              img.src = thumbPath;
+              img.onerror = function () {
+                this.onerror = null;
+                this.src = item.image;
+              };
+
+              img.style.width = "24px";
+              img.style.height = "24px";
+              img.style.verticalAlign = "middle";
+              img.style.marginRight = "5px";
+              img.style.border = "1px solid #ccc";
+              container.appendChild(img);
+            }
+
+            const textSpan = document.createElement("span");
+            textSpan.textContent = item.title;
+            textSpan.style.flex = "1";
+            container.appendChild(textSpan);
+
+            return container;
+          },
+          onMove: function (item, callback) {
+            callback(item);
+            saveEvents();
+          },
+          onUpdate: function (item, callback) {
+            // Simplified update for now - just save position changes
+            callback(item);
+            saveEvents();
+          },
+          onRemove: function (item, callback) {
+            // Store the callback to use after confirmation
+            window.pendingDeleteCallback = callback;
+            window.pendingDeleteItem = item;
+            openDeleteModal(item.id);
+          },
+        };
+
+        // Render event details functions
+
+        timeline = new Timeline(container, items, options);
+        // Add double-click listener to open edit modal
+        timeline.on("doubleClick", function (properties) {
+          if (properties.item) {
+            openEditModal(properties.item);
+          }
+        });
+
+        // Add select listener to show event details
+      }
+
+      // Helper function to convert Date objects back to date strings
+      function formatDateToString(date) {
+        if (!date) return null;
+        if (typeof date === "string") return date; // Already a string
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+      }
+
+      function saveEvents() {
+        const data = items.get();
+
+        // Convert Date objects back to date strings for JSON storage
+        const dataToSave = data.map((event) => ({
+          ...event,
+          start: formatDateToString(event.start),
+          end: event.end ? formatDateToString(event.end) : undefined,
+        }));
+
+        fetch("/api/events", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dataToSave),
+        })
+          .then((response) => response.text())
+          .then((data) => {
+            console.log("Success:", data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+
+      // Initial Load
+      loadEvents();
+
+      // --- Custom Selection Logic ---
+      let selectedEventIds = [];
+
+      // Handle click events for selection
+      document.body.addEventListener("click", function (e) {
+        // Find closest element with data-id (our timeline items)
+        const el = e.target.closest("[data-id]");
+
+        if (el) {
+          const id = el.dataset.id;
+          handleSelection(id, e);
+        }
+      });
+
+      // Handle ESC key to clear selection
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          clearSelection();
+        }
+      });
+
+      function handleSelection(id, event) {
+        const isModifierPressed =
+          event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
+
+        // Convert id to number if needed (vis-timeline might use numbers)
+        // But dataset is always string. Let's check items to see type.
+        // items.get(id) works with both usually if IDs are simple.
+        // Let's keep it as is from dataset (string) but cast if needed.
+        // Actually, vis-timeline IDs can be strings or numbers.
+        // We should check what type our IDs are.
+        // In loadEvents we don't force type.
+        // Let's try to match type from items.
+        let targetId = id;
+        const item = items.get(id);
+        if (!item) {
+          // Try converting to number
+          const numId = parseInt(id, 10);
+          if (items.get(numId)) {
+            targetId = numId;
+          }
+        }
+
+        if (!isModifierPressed) {
+          // Case: No modifier -> Select only this one (as #1)
+          selectedEventIds = [targetId];
+        } else {
+          // Case: Modifier pressed
+          if (selectedEventIds.length === 0) {
+            // Nothing selected -> Select as #1
+            selectedEventIds = [targetId];
+          } else if (selectedEventIds.length === 1) {
+            // One selected -> Select as #2 (if different)
+            if (selectedEventIds[0] != targetId) {
+              selectedEventIds.push(targetId);
+            }
+          } else {
+            // Two selected -> Replace #2
+            if (selectedEventIds[0] != targetId) {
+              selectedEventIds[1] = targetId;
+            } else {
+              // Clicked #1 again with modifier? Let's do nothing or maybe deselect?
+              // User requirement: "when user keeps clicking events then only the second one is changing in selection"
+              // So if I click #1, it stays #1.
+            }
+          }
+        }
+
+        updateSelectionVisuals();
+        renderComparison();
+
+        // Show details for the clicked event
+        if (selectedEventIds.includes(targetId)) {
+          const ev = items.get(targetId);
+          renderEventDetails(ev);
+        } else if (selectedEventIds.length > 0) {
+          const ev = items.get(selectedEventIds[0]);
+          renderEventDetails(ev);
+        } else {
+          clearEventDetails();
+        }
+      }
+
+      function clearSelection() {
+        selectedEventIds = [];
+        updateSelectionVisuals();
+        renderComparison();
+        clearEventDetails();
+      }
+
+      function updateSelectionVisuals() {
+        // Reset all items classes
+        items.forEach((item) => {
+          const updatedItem = { ...item, className: "" };
+          // We need to preserve existing classes if any?
+          // For now assuming no other critical classes are managed via className property on data items directly.
+          // Vis-timeline uses className property on item data.
+
+          // Actually, better to only update the ones that changed to avoid full re-render if possible,
+          // but iterating all is safer to ensure clean state.
+
+          let className = "";
+          if (selectedEventIds[0] == item.id) {
+            className = "selected-item-1";
+          } else if (selectedEventIds[1] == item.id) {
+            className = "selected-item-2";
+          }
+
+          if (item.className !== className) {
+            items.update({ id: item.id, className: className });
+          }
+        });
+      }
+
+      function renderComparison() {
+        const container = document.getElementById("compare");
+        container.innerHTML = "";
+        container.className = ""; // Reset classes
+
+        if (selectedEventIds.length === 0) {
+          return;
+        }
+
+        if (selectedEventIds.length === 1) {
+          container.className = "instruction";
+          container.innerHTML =
+            "Select a second event with <b>Shift/Ctrl/Alt + Click</b> to compare.";
+          return;
+        }
+
+        // Two events selected - Show full comparison
+        container.className = "active";
+
+        // Visualization Logic
+        const svgContainer = document.createElement("div");
+
+        const ev1 = items.get(selectedEventIds[0]);
+        const ev2 = selectedEventIds[1] ? items.get(selectedEventIds[1]) : null;
+
+        // Simple SVG visualization
+        const width = container.clientWidth - 40;
+        // const height = 200; // Moved inside renderComparison to be adjustable
+
+        // We need to normalize dates to fit in width
+        // Get all relevant dates
+        let dates = [];
+
+        function addDates(ev) {
+          if (!ev) return;
+          dates.push(ev.start);
+          if (ev.end) dates.push(ev.end);
+          else dates.push(ev.start); // Treat point as start=end for range calc
+        }
+
+        addDates(ev1);
+        addDates(ev2);
+
+        // Ordinal Layout Algorithm
+        // 1. Collect all significant time points
+        let timePoints = [];
+        timePoints.push({ time: ev1.start.getTime(), type: "start", event: 1 });
+        if (ev1.end)
+          timePoints.push({ time: ev1.end.getTime(), type: "end", event: 1 });
+        else
+          timePoints.push({ time: ev1.start.getTime(), type: "end", event: 1 }); // Point event
+
+        if (ev2) {
+          timePoints.push({
+            time: ev2.start.getTime(),
+            type: "start",
+            event: 2,
+          });
+          if (ev2.end)
+            timePoints.push({ time: ev2.end.getTime(), type: "end", event: 2 });
+          else
+            timePoints.push({
+              time: ev2.start.getTime(),
+              type: "end",
+              event: 2,
+            });
+        }
+
+        // 2. Sort points
+        timePoints.sort((a, b) => a.time - b.time);
+
+        // 3. Assign initial X coordinates (distribute evenly or with min gap)
+        // We want to preserve order but ensure readability.
+        // Let's assign a "rank" to each unique time.
+        let uniqueTimes = [...new Set(timePoints.map((p) => p.time))].sort(
+          (a, b) => a - b
+        );
+        let timeToX = new Map();
+
+        // Base spacing
+        const baseSpacing = 150;
+        let currentX = 50; // Padding left
+
+        uniqueTimes.forEach((t, i) => {
+          timeToX.set(t, currentX);
+          currentX += baseSpacing;
+        });
+
+        // 4. Enforce minimum width constraints
+        // We need to ensure that for each event, x(End) - x(Start) >= TextWidth
+
+        function ensureWidth(ev, evId) {
+          if (!ev) return;
+          const startT = ev.start.getTime();
+          const endT = ev.end ? ev.end.getTime() : startT;
+
+          const startX = timeToX.get(startT);
+          const endX = timeToX.get(endT);
+
+          const textLen = (ev.title || "").length * 10; // Approx char width
+          const minW = Math.max(150, textLen);
+
+          if (endX - startX < minW) {
+            const diff = minW - (endX - startX);
+            // Shift all times >= endT by diff
+            // But wait, if we shift endT, we must shift everything after it too to preserve order
+            // And we must update the map
+
+            // Find index of endT in uniqueTimes
+            const endIndex = uniqueTimes.indexOf(endT);
+
+            // Update all subsequent times
+            for (let i = endIndex; i < uniqueTimes.length; i++) {
+              const t = uniqueTimes[i];
+              timeToX.set(t, timeToX.get(t) + diff);
+            }
+          }
+        }
+
+        ensureWidth(ev1, 1);
+        if (ev2) ensureWidth(ev2, 2);
+
+        // Recalculate width for SVG container if needed
+        const maxX = Math.max(...Array.from(timeToX.values())) + 50;
+        const finalWidth = Math.max(width, maxX);
+
+        function getX(date) {
+          return timeToX.get(date.getTime());
+        }
+
+        // Calculate dynamic height based on expected dimension lines
+        let maxDimY = 180;
+        if (ev1.end && ev2.end) maxDimY = 240;
+        else if (ev2.end) maxDimY = 220;
+        else if (ev1.end) maxDimY = 200;
+
+        const height = maxDimY + 20;
+
+        // SVG Construction
+        let svg = `<svg width="${finalWidth}" height="${height}" style="overflow: visible;">`;
+
+        // Defs for markers
+        svg += `<defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L9,3 z" fill="#666" />
+            </marker>
+        </defs>`;
+
+        // Draw Event 1 (Top)
+        const y1 = 30;
+        const x1Start = getX(ev1.start);
+        const x1End = ev1.end ? getX(ev1.end) : x1Start;
+
+        // Line for Event 1
+        svg += `<line x1="${x1Start}" y1="${y1}" x2="${x1End}" y2="${y1}" stroke="black" stroke-width="4" />`;
+        // Title Label
+        svg += `<text x="${(x1Start + x1End) / 2}" y="${
+          y1 - 25
+        }" text-anchor="middle" font-weight="bold" font-size="14">${
+          ev1.title
+        }</text>`;
+
+        // Labels A, B
+        svg += `<text x="${x1Start}" y="${
+          y1 - 10
+        }" text-anchor="middle" font-size="12">A</text>`;
+        svg += `<text x="${x1Start}" y="${
+          y1 + 35
+        }" text-anchor="middle" font-size="10" fill="#666">${formatDateForDisplay(
+          formatDateToString(ev1.start)
+        )}</text>`;
+        svg += `<circle cx="${x1Start}" cy="${y1}" r="4" fill="white" stroke="blue" stroke-width="2" />`;
+
+        if (ev1.end) {
+          svg += `<text x="${x1End}" y="${
+            y1 - 10
+          }" text-anchor="middle" font-size="12">B</text>`;
+          svg += `<text x="${x1End}" y="${
+            y1 + 35
+          }" text-anchor="middle" font-size="10" fill="#666">${formatDateForDisplay(
+            formatDateToString(ev1.end)
+          )}</text>`;
+          svg += `<circle cx="${x1End}" cy="${y1}" r="4" fill="white" stroke="blue" stroke-width="2" />`;
+
+          // Duration Label
+          const duration1 = calculateDuration(
+            formatDateToString(ev1.start),
+            formatDateToString(ev1.end)
+          );
+          svg += `<text x="${(x1Start + x1End) / 2}" y="${
+            y1 + 18
+          }" text-anchor="middle" font-size="11" fill="#444" font-style="italic">${duration1}</text>`;
+        }
+
+        // Draw Event 2 (Bottom) if exists
+        let y2 = 120; // Moved down from 100
+        if (ev2) {
+          const x2Start = getX(ev2.start);
+          let x2End = ev2.end ? getX(ev2.end) : x2Start;
+
+          // Enforce minimum width for readability
+          if (ev2.end) {
+            const minW = Math.max(150, (ev2.title || "").length * 14);
+            if (x2End - x2Start < minW) {
+              x2End = x2Start + minW;
+            }
+          }
+
+          svg += `<line x1="${x2Start}" y1="${y2}" x2="${x2End}" y2="${y2}" stroke="black" stroke-width="4" />`;
+          // Title Label
+          svg += `<text x="${(x2Start + x2End) / 2}" y="${
+            y2 - 25
+          }" text-anchor="middle" font-weight="bold" font-size="14">${
+            ev2.title
+          }</text>`;
+
+          // Labels C, D
+          svg += `<text x="${x2Start}" y="${
+            y2 - 10
+          }" text-anchor="middle" font-size="12">C</text>`;
+          svg += `<text x="${x2Start}" y="${
+            y2 + 35
+          }" text-anchor="middle" font-size="10" fill="#666">${formatDateForDisplay(
+            formatDateToString(ev2.start)
+          )}</text>`;
+          svg += `<circle cx="${x2Start}" cy="${y2}" r="4" fill="white" stroke="purple" stroke-width="2" />`;
+
+          if (ev2.end) {
+            svg += `<text x="${x2End}" y="${
+              y2 - 10
+            }" text-anchor="middle" font-size="12">D</text>`;
+            svg += `<text x="${x2End}" y="${
+              y2 + 35
+            }" text-anchor="middle" font-size="10" fill="#666">${formatDateForDisplay(
+              formatDateToString(ev2.end)
+            )}</text>`;
+            svg += `<circle cx="${x2End}" cy="${y2}" r="4" fill="white" stroke="purple" stroke-width="2" />`;
+
+            // Duration Label
+            const duration2 = calculateDuration(
+              formatDateToString(ev2.start),
+              formatDateToString(ev2.end)
+            );
+            svg += `<text x="${(x2Start + x2End) / 2}" y="${
+              y2 + 18
+            }" text-anchor="middle" font-size="11" fill="#444" font-style="italic">${duration2}</text>`;
+          }
+
+          // Draw dotted vertical lines for all points
+          const drawDotted = (x, yTop, yBottom) => {
+            return `<line x1="${x}" y1="${yTop}" x2="${x}" y2="${yBottom}" stroke="#ccc" stroke-dasharray="4" />`;
+          };
+
+          svg += drawDotted(x1Start, y1, height);
+          if (ev1.end) svg += drawDotted(x1End, y1, height);
+          svg += drawDotted(x2Start, y2, height);
+          if (ev2.end) svg += drawDotted(x2End, y2, height);
+
+          // Calculate and draw differences
+          // We need to show differences between relevant points.
+          // Let's collect points: A(Start1), B(End1), C(Start2), D(End2)
+
+          const points = [
+            { label: "A", time: ev1.start, x: x1Start, y: y1 },
+            { label: "B", time: ev1.end, x: x1End, y: y1, exists: !!ev1.end },
+            { label: "C", time: ev2.start, x: x2Start, y: y2 },
+            { label: "D", time: ev2.end, x: x2End, y: y2, exists: !!ev2.end },
+          ];
+
+          // Draw dimension lines
+          let dimY = 180; // Moved down from 140
+          const drawDim = (p1, p2, yLevel) => {
+            if (!p1.exists && p1.label !== "A" && p1.label !== "C") return; // Skip if point doesn't exist (except starts which always exist)
+            if (!p2.exists && p2.label !== "A" && p2.label !== "C") return;
+
+            // Don't draw if same point
+            if (p1.x === p2.x) return;
+
+            const minX = Math.min(p1.x, p2.x);
+            const maxX = Math.max(p1.x, p2.x);
+            const midX = (minX + maxX) / 2;
+
+            // Ensure dates are in chronological order (earlier date first)
+            const earlierDate = p1.time < p2.time ? p1.time : p2.time;
+            const laterDate = p1.time < p2.time ? p2.time : p1.time;
+            const duration = calculateDuration(
+              formatDateToString(earlierDate),
+              formatDateToString(laterDate)
+            );
+
+            let s = `<line x1="${minX}" y1="${yLevel}" x2="${maxX}" y2="${yLevel}" stroke="#999" stroke-width="1" />`;
+            // Ticks
+            s += `<line x1="${minX}" y1="${yLevel - 3}" x2="${minX}" y2="${
+              yLevel + 3
+            }" stroke="#999" />`;
+            s += `<line x1="${maxX}" y1="${yLevel - 3}" x2="${maxX}" y2="${
+              yLevel + 3
+            }" stroke="#999" />`;
+            // Label
+            s += `<text x="${midX}" y="${
+              yLevel - 5
+            }" text-anchor="middle" font-size="10" fill="#666">${duration}</text>`;
+            return s;
+          };
+
+          // Example comparisons:
+          // A -> C (Start to Start)
+          svg += drawDim(points[0], points[2], dimY);
+
+          // B -> C (End to Start) - if B exists
+          if (points[1].exists) {
+            svg += drawDim(points[1], points[2], dimY + 20);
+          }
+
+          // A -> D (Start to End) - if D exists
+          if (points[3].exists) {
+            svg += drawDim(points[0], points[3], dimY + 40);
+          }
+
+          // B -> D (End to End) - if B and D exist
+          if (points[1].exists && points[3].exists) {
+            svg += drawDim(points[1], points[3], dimY + 60);
+          }
+        }
+
+        svg += `</svg>`;
+        svgContainer.innerHTML = svg;
+        container.appendChild(svgContainer);
+      }
+
+      // Re-render comparison on window resize
+      window.addEventListener("resize", () => {
+        if (selectedEventIds.length >= 2) {
+          renderComparison();
+        }
+      });
+
+      // Modifier Indicator Popup Logic
+      modifierIndicator.addEventListener("mouseenter", () => {
+        if (selectedEventIds.length === 0) {
+          // Show popup
+          const tooltip = document.createElement("div");
+          tooltip.id = "modifier-tooltip";
+          tooltip.style.position = "fixed";
+          tooltip.style.top = "25px";
+          tooltip.style.right = "25px";
+          tooltip.style.background = "#333";
+          tooltip.style.color = "white";
+          tooltip.style.padding = "10px";
+          tooltip.style.borderRadius = "4px";
+          tooltip.style.fontSize = "12px";
+          tooltip.style.zIndex = "10000";
+          tooltip.innerHTML =
+            "Click events to select.<br>Hold Shift/Ctrl/Alt to select a second event.";
+          document.body.appendChild(tooltip);
+        }
+      });
+
+      modifierIndicator.addEventListener("mouseleave", () => {
+        const tooltip = document.getElementById("modifier-tooltip");
+        if (tooltip) tooltip.remove();
+      });
+    </script>
+  </body>
+</html>
