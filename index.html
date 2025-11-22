@@ -363,6 +363,38 @@
           </div>
 
           <div class="form-group">
+            <label style="font-weight: bold; margin-bottom: 8px; display: block">Event Color (optional):</label>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <input 
+                type="color" 
+                id="eventColor" 
+                value="#428bad"
+                style="width: 50px; height: 35px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"
+              />
+              <input 
+                type="text" 
+                id="eventColorText" 
+                value="#428bad"
+                placeholder="#428bad"
+                pattern="^#[0-9A-Fa-f]{6}$"
+                style="width: 90px; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace;"
+              />
+              <button 
+                type="button" 
+                id="clearColorBtn"
+                style="padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s;"
+                onmouseover="this.style.background='#1976D2'"
+                onmouseout="this.style.background='#2196F3'"
+              >
+                Use Default
+              </button>
+              <div id="previousColorsList" style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                <!-- Previously used colors will appear here as clickable swatches -->
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label>
               <input type="checkbox" id="isRange" name="isRange" />
               Event has duration (Start & End)
@@ -869,7 +901,104 @@
             document.getElementById('addGroupBtn').click();
           }
         });
+
+        // Color picker synchronization
+        const colorPicker = document.getElementById('eventColor');
+        const colorText = document.getElementById('eventColorText');
+        const clearColorBtn = document.getElementById('clearColorBtn');
+        
+        // Track if user wants to use default (no custom color)
+        let useDefaultColor = true;
+
+        // Sync color picker to text input
+        colorPicker.addEventListener('input', (e) => {
+          colorText.value = e.target.value;
+          useDefaultColor = false; // User is selecting a custom color
+        });
+
+        // Sync text input to color picker
+        colorText.addEventListener('input', (e) => {
+          const value = e.target.value;
+          if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+            colorPicker.value = value;
+            useDefaultColor = false; // User is selecting a custom color
+          }
+        });
+
+        // Clear color button - reset to default (don't send color field)
+        clearColorBtn.addEventListener('click', () => {
+          colorPicker.value = '#428bad';
+          colorText.value = '#428bad';
+          useDefaultColor = true; // User wants to use default
+        });
+        
+        // Make useDefaultColor accessible globally for form submission
+        window.useDefaultColor = () => useDefaultColor;
+        window.setCustomColor = () => { useDefaultColor = false; };
       });
+
+      // Color Management Functions
+      function getAllUniqueColors() {
+        const colorsSet = new Set();
+        allEvents.forEach(event => {
+          if (event.color && /^#[0-9A-Fa-f]{6}$/i.test(event.color)) {
+            colorsSet.add(event.color.toLowerCase());
+          }
+        });
+        return Array.from(colorsSet);
+      }
+
+      function renderPreviousColors() {
+        const list = document.getElementById('previousColorsList');
+        const uniqueColors = getAllUniqueColors();
+        
+        list.innerHTML = '';
+        
+        if (uniqueColors.length === 0) {
+          return;
+        }
+        
+        uniqueColors.forEach(color => {
+          const swatch = document.createElement('div');
+          swatch.style.cssText = `
+            width: 27px;
+            height: 27px;
+            background-color: ${color};
+            border: 2px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+          `;
+          swatch.title = color;
+          
+          swatch.addEventListener('mouseenter', () => {
+            swatch.style.transform = 'scale(1.15)';
+            swatch.style.borderColor = '#666';
+          });
+          
+          swatch.addEventListener('mouseleave', () => {
+            swatch.style.transform = 'scale(1)';
+            swatch.style.borderColor = '#ccc';
+          });
+          
+          swatch.addEventListener('click', () => {
+            document.getElementById('eventColor').value = color;
+            document.getElementById('eventColorText').value = color;
+            // Mark as custom color selection
+            if (window.setCustomColor) {
+              window.setCustomColor();
+            }
+            // Visual feedback
+            swatch.style.borderColor = '#2196F3';
+            setTimeout(() => {
+              swatch.style.borderColor = '#ccc';
+            }, 300);
+          });
+          
+          list.appendChild(swatch);
+        });
+      }
+
 
       function renderGroupFilters() {
         const container = document.getElementById('groupFilters');
@@ -937,6 +1066,10 @@
             } else {
               processed.type = "point";
             }
+            // Apply color styling if color is specified
+            if (event.color && /^#[0-9A-Fa-f]{6}$/i.test(event.color)) {
+              processed.style = `background-color: ${event.color};`;
+            }
             return processed;
           });
           items.clear();
@@ -970,6 +1103,10 @@
             processed.end = parseDateString(event.end);
           } else {
             processed.type = "point";
+          }
+          // Apply color styling if color is specified
+          if (event.color && /^#[0-9A-Fa-f]{6}$/i.test(event.color)) {
+            processed.style = `background-color: ${event.color};`;
           }
           return processed;
         });
@@ -1165,6 +1302,17 @@
         renderGroupCheckboxes();
         updateSelectedGroupsDisplay();
 
+        // Render previous colors
+        renderPreviousColors();
+
+        // Reset color to default and set flag
+        document.getElementById('eventColor').value = '#428bad';
+        document.getElementById('eventColorText').value = '#428bad';
+        if (window.setCustomColor) {
+          // Reset to using default (not custom)
+          window.useDefaultColor = () => true;
+        }
+
         // Clear any error messages
         document.getElementById("errorMessage").style.display = "none";
         document.getElementById("startDateError").style.display = "none";
@@ -1308,6 +1456,23 @@
         }
         renderGroupCheckboxes();
         updateSelectedGroupsDisplay();
+
+        // Render previous colors
+        renderPreviousColors();
+
+        // Populate color if exists, otherwise use default
+        const eventColor = rawEvent && rawEvent.color ? rawEvent.color : '#428bad';
+        document.getElementById('eventColor').value = eventColor;
+        document.getElementById('eventColorText').value = eventColor;
+        
+        // Set the custom color flag based on whether event has a color
+        if (window.useDefaultColor) {
+          if (rawEvent && rawEvent.color) {
+            window.useDefaultColor = () => false; // Event has custom color
+          } else {
+            window.useDefaultColor = () => true; // Event uses default
+          }
+        }
 
         // Parse and populate start date
         if (event.start) {
@@ -1496,6 +1661,13 @@
           formData.append("group", JSON.stringify(Array.from(selectedGroups)));
         }
 
+        // Add color only if user has explicitly selected a custom color
+        const selectedColor = document.getElementById('eventColorText').value;
+        const isUsingDefault = window.useDefaultColor ? window.useDefaultColor() : true;
+        if (!isUsingDefault && selectedColor && /^#[0-9A-Fa-f]{6}$/i.test(selectedColor)) {
+          formData.append("color", selectedColor.toLowerCase());
+        }
+
         formData.append("start", startDate);
         if (endDate) {
           formData.append("end", endDate);
@@ -1657,6 +1829,11 @@
               } else {
                 // Add type="point" for events with only start date
                 processed.type = "point";
+              }
+              
+              // Apply color styling if color is specified
+              if (event.color && /^#[0-9A-Fa-f]{6}$/i.test(event.color)) {
+                processed.style = `background-color: ${event.color};`;
               }
               
               return processed;

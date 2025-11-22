@@ -85,7 +85,7 @@ const downloadImage = (url) => {
 
 app.post("/api/events/create", upload.single('imageFile'), async (req, res) => {
     try {
-        const { title, start, end, type, imageSource, imageUrl, group } = req.body;
+        const { title, start, end, type, imageSource, imageUrl, group, color } = req.body;
         
         let imagePath = '';
         
@@ -121,7 +121,8 @@ app.post("/api/events/create", upload.single('imageFile'), async (req, res) => {
             end: end || undefined,
             type: type || undefined,
             image: imagePath || undefined,
-            group: groupArray
+            group: groupArray,
+            color: color || undefined
         };
 
         // Read existing events
@@ -147,7 +148,7 @@ app.post("/api/events/create", upload.single('imageFile'), async (req, res) => {
 app.put("/api/events/:id", upload.single('imageFile'), async (req, res) => {
     try {
         const eventId = parseInt(req.params.id, 10);
-        const { title, start, end, type, imageSource, imageUrl, group } = req.body;
+        const { title, start, end, type, imageSource, imageUrl, group, color } = req.body;
         
         const eventsPath = path.join(__dirname, "events.json");
         let events = [];
@@ -221,7 +222,8 @@ app.put("/api/events/:id", upload.single('imageFile'), async (req, res) => {
             end: end || undefined,
             type: type || undefined,
             image: imagePath,
-            group: groupArray
+            group: groupArray,
+            color: color || undefined
         };
 
         // Save events

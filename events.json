@@ -8,7 +8,8 @@
     "image": "img/1643/12/24-isaac_newton.jpg",
     "group": [
       "people"
-    ]
+    ],
+    "color": "#b8b8b8"
   },
   {
     "id": 1763739094473,
@@ -21,13 +22,14 @@
   {
     "id": 1763741495698,
     "title": "Roman Empire",
-    "content": "",
+    "content": "Yep",
     "start": "-27-01-01",
     "end": "476-01-01",
     "image": "img/-27/01/01-roman_empire.jpg",
     "group": [
       "civilisations"
-    ]
+    ],
+    "color": "#daffc2"
   },
   {
     "id": 1763774489866,
