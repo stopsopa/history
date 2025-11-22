@@ -226,21 +226,6 @@
         background: none;
       }
 
-      .compare-close-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: none;
-        border: none;
-        font-size: 20px;
-        cursor: pointer;
-        color: #999;
-      }
-      
-      .compare-close-btn:hover {
-        color: #333;
-      }
-
       .compare-ids {
         margin-bottom: 15px;
         font-family: monospace;
@@ -1904,12 +1889,7 @@
             return `${days} days (${years}y)`;
         };
 
-        // Add Close Button
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'compare-close-btn';
-        closeBtn.innerHTML = '&times;';
-        closeBtn.onclick = clearSelection;
-        container.appendChild(closeBtn);
+
 
         // Display IDs
         const idsDiv = document.createElement('div');
