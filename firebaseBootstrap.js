@@ -93,6 +93,16 @@ export function bootstrapFirebase({ containerId }) {
   <li>Click <strong>Enable</strong></li>
   <li>Below in field <strong>Support email for project</strong> select your email</li>
   <li>Hit <strong>Save</strong></li>
+  <li>Let's configure access rules, go to <strong>Firestore Database</strong> -&gt; <strong>Rules</strong></li>
+  <li>paste <pre>rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      // Allow read/write only if the user is logged in
+      allow read, write: if request.auth != null;
+    }
+  }
+}</pre></li>
 
 
             </ul>
