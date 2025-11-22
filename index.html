@@ -2018,8 +2018,15 @@
             return timeToX.get(date.getTime());
         }
 
+        // Calculate dynamic height based on expected dimension lines
+        let maxDimY = 180;
+        if (ev1.end && ev2.end) maxDimY = 240;
+        else if (ev2.end) maxDimY = 220;
+        else if (ev1.end) maxDimY = 200;
+        
+        const height = maxDimY + 20;
+
         // SVG Construction
-        const height = 300; // Increased height
         let svg = `<svg width="${finalWidth}" height="${height}" style="overflow: visible;">`;
         
         // Defs for markers
