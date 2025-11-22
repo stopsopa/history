@@ -101,10 +101,16 @@ export function bootstrapFirebase({ containerId }) {
           localStorage.removeItem(STORAGE_KEY);
           configTextarea.value = "";
           configTextarea.style.background = "white";
+          configTextarea.style.display = "block";
+          configTextarea.disabled = false;
+
           clearConfigBtn.style.display = "none";
+          initBtn.style.display = "inline-block";
+          loginSection.style.display = "none";
+
           errorMsg.textContent = "";
           errorMsg.style.color = "green";
-          errorMsg.textContent = "Saved config cleared!";
+          errorMsg.textContent = "Config reset!";
           setTimeout(() => {
             errorMsg.textContent = "";
           }, 2000);
@@ -176,11 +182,11 @@ export function bootstrapFirebase({ containerId }) {
           localStorage.setItem(STORAGE_KEY, configText);
 
           // Show login section
+
           initBtn.style.display = "none";
-          if (clearConfigBtn) clearConfigBtn.style.display = "none";
+          if (clearConfigBtn) clearConfigBtn.style.display = "inline-block";
           loginSection.style.display = "block";
-          configTextarea.disabled = true;
-          configTextarea.style.background = "#f5f5f5";
+          configTextarea.style.display = "none";
         } catch (err) {
           console.error("Firebase initialization error:", err);
           errorMsg.textContent = `Initialization failed: ${err.message}`;
