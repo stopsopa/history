@@ -672,10 +672,15 @@
     </div>
 
     <script type="module">
+      import { autocolors } from "./color/experiment5.js";
       import {
         formatDateForDisplay,
         calculateDuration,
       } from "./lib/dateUtils.js";
+
+      // Initialize auto-colors for timeline items
+      autocolors('[data-id]');
+
       const container = document.getElementById("visualization");
       const addEventBtn = document.getElementById("add-event-btn");
       const modal = document.getElementById("eventModal");
