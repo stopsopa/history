@@ -242,7 +242,10 @@
       "
     >
       <button id="add-event-btn" style="padding: 5px 10px; cursor: pointer">
-        Add Event
+        Add New Event
+      </button>
+      <button id="fit-timeline-btn" style="padding: 5px 10px; cursor: pointer; margin-left: 5px;">
+        Fit All
       </button>
       <a href="https://visjs.github.io/vis-timeline/examples/timeline/">Docs</a>
       <a href="https://github.com/stopsopa/history">Github</a>
@@ -847,6 +850,7 @@
 
       const visualizationContainer = document.getElementById("visualization");
       const addEventBtn = document.getElementById("add-event-btn");
+      const fitTimelineBtn = document.getElementById("fit-timeline-btn");
       const modal = document.getElementById("eventModal");
       const closeBtn = document.getElementsByClassName("close")[0];
       const form = document.getElementById("addEventForm");
@@ -1157,7 +1161,7 @@
       }
 
       function applyFilters() {
-        if (!timeline || !items) return;
+        if (!timeline || !timelineItems) return;
 
         // If no filters active, show all events
         if (activeFilters.size === 0) {
@@ -1393,7 +1397,7 @@
       });
 
       // Modal Logic
-      addEventBtn.onclick = function () {
+      function openModal() {
         modal.style.display = "block";
 
         // Reset modal title for adding new event
@@ -1443,6 +1447,16 @@
         // Clear EasyMDE editor
         if (easyMDE) {
           easyMDE.value("");
+        }
+      };
+
+      addEventBtn.onclick = function () {
+        openModal();
+      };
+
+      fitTimelineBtn.onclick = function () {
+        if (timeline) {
+          timeline.fit();
         }
       };
 
