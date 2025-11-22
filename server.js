@@ -322,7 +322,7 @@ app.use(express.static(web, {
 
 if (process.env.NODE_ENV !== 'test') {
     app.listen(port, host, () => {
-        const startTime = new Date().toLocaleString();
+        const startTime = (new Date()).toISOString().substring(0, 19).replace('T', ' ')
         log(`\n 🌎  Server is running http://${host}:${port}`);
         log(` ⏰  Started at: ${startTime}\n`);
     });
