@@ -637,16 +637,8 @@
                   No Image</label
                 >
                 <label
-                  ><input type="radio" name="imageSource" value="upload" />
-                  Upload File</label
-                >
-                <label
                   ><input type="radio" name="imageSource" value="url" /> Image
                   URL</label
-                >
-                <label id="keepImageLabel" style="display: none"
-                  ><input type="radio" name="imageSource" value="keep" /> Keep
-                  previous image</label
                 >
               </div>
 
@@ -670,21 +662,6 @@
                       border-radius: 4px;
                     "
                   />
-                </div>
-
-                <!-- Upload Input -->
-                <div class="hidden" id="uploadGroup">
-                  <div class="drop-zone" id="dropZone" style="margin-top: 0">
-                    <p>Drag & Drop image here or click to select</p>
-                    <input
-                      type="file"
-                      id="imageFile"
-                      name="imageFile"
-                      accept="image/*"
-                      style="display: none"
-                    />
-                    <p id="fileName" style="font-size: 0.9em; color: #666"></p>
-                  </div>
                 </div>
 
                 <!-- URL Input -->
@@ -799,15 +776,32 @@
 
       import { bootstrapFirebase } from "./firebaseBootstrap.js";
 
+      import {
+        loadEventsFromFirestore,
+        saveEventToFirestore,
+        updateEventInFirestore,
+        deleteEventFromFirestore,
+        saveAllEventsToFirestore,
+      } from "./lib/firebaseData.js";
+
+      // Global Firebase state
+      let firebaseAuth, firebaseDb, firebaseUser;
+
+      // Top-level await (allowed in ES modules)
       try {
-        const { auth, provider, app, user } = await bootstrapFirebase({
+        const { auth, db, user } = await bootstrapFirebase({
           containerId: "firebase-bootstrap-container",
         });
 
-        console.log("User logged in:", user);
-        // Now you can use `auth`, `app`, Firestore, etc.
+        firebaseAuth = auth;
+        firebaseDb = db;
+        firebaseUser = user;
+
+        console.log("✅ Firebase initialized! User:", user.displayName);
       } catch (err) {
-        console.error("Firebase bootstrap failed:", err);
+        console.error("❌ Firebase bootstrap failed:", err);
+        alert("Failed to initialize Firebase. Please refresh and try again.");
+        throw err; // Stop execution if Firebase fails
       }
 
       // Initialize auto-colors for timeline items
@@ -1514,7 +1508,7 @@
         currentDeleteId = null;
       };
 
-      confirmDeleteBtn.onclick = function () {
+      confirmDeleteBtn.onclick = async function () {
         if (!currentDeleteId) return;
 
         // If called from vis-timeline native button, use the callback
@@ -1526,26 +1520,16 @@
           currentDeleteId = null;
           saveEvents();
         } else {
-          // If called from custom button (fallback), use fetch
-          fetch(`/api/events/${currentDeleteId}`, {
-            method: "DELETE",
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.success) {
-                deleteModal.style.display = "none";
-                currentDeleteId = null;
-                loadEvents(); // Reload timeline
-              } else {
-                alert(
-                  "Error deleting event: " + (data.error || "Unknown error")
-                );
-              }
-            })
-            .catch((error) => {
-              console.error("Error:", error);
-              alert("Error deleting event");
-            });
+          // If called from custom button
+          try {
+            await deleteEventFromFirestore(firebaseDb, currentDeleteId);
+            deleteModal.style.display = "none";
+            currentDeleteId = null;
+            loadEvents();
+          } catch (error) {
+            console.error("Error deleting event:", error);
+            alert("Failed to delete event: " + error.message);
+          }
         }
       };
 
@@ -1630,35 +1614,39 @@
         }
 
         // Handle image options
-        const keepImageLabel = document.getElementById("keepImageLabel");
         const currentImagePreview = document.getElementById(
           "currentImagePreview"
         );
         const currentImageThumb = document.getElementById("currentImageThumb");
+        const imageUrlInput = document.getElementById("imageUrl");
 
-        if (event.image) {
-          // Show "Keep previous image" option
-          keepImageLabel.style.display = "inline";
+        // Check for image property (mapped from imageUrl in loadEvents) or direct imageUrl
+        const imageSrc = event.image || event.imageUrl;
+
+        if (imageSrc) {
+          // Populate URL input
+          imageUrlInput.value = imageSrc;
+
+          // Show preview
           currentImagePreview.style.display = "block";
-          currentImageThumb.src = event.image;
+          currentImageThumb.src = imageSrc;
 
-          // Select "Keep previous image" by default
+          // Select "Image URL"
           document.querySelector(
-            'input[name="imageSource"][value="keep"]'
+            'input[name="imageSource"][value="url"]'
           ).checked = true;
-          uploadGroup.classList.add("hidden");
-          urlGroup.classList.add("hidden");
+          document.getElementById("urlGroup").classList.remove("hidden");
         } else {
-          // No existing image, hide "Keep previous image" option
-          keepImageLabel.style.display = "none";
+          // No image
+          imageUrlInput.value = "";
           currentImagePreview.style.display = "none";
+          currentImageThumb.src = "";
 
-          // Select "No Image" by default
+          // Select "No Image"
           document.querySelector(
             'input[name="imageSource"][value="none"]'
           ).checked = true;
-          uploadGroup.classList.add("hidden");
-          urlGroup.classList.add("hidden");
+          document.getElementById("urlGroup").classList.add("hidden");
         }
 
         modal.style.display = "block";
@@ -1699,48 +1687,16 @@
 
       imageSourceRadios.forEach((radio) => {
         radio.onchange = function () {
-          if (this.value === "upload") {
-            uploadGroup.classList.remove("hidden");
-            urlGroup.classList.add("hidden");
-          } else if (this.value === "url") {
-            uploadGroup.classList.add("hidden");
+          if (this.value === "url") {
             urlGroup.classList.remove("hidden");
           } else {
-            uploadGroup.classList.add("hidden");
             urlGroup.classList.add("hidden");
           }
         };
       });
 
-      // Drag & Drop
-      dropZone.onclick = () => imageInput.click();
-
-      imageInput.onchange = function () {
-        if (this.files.length > 0) {
-          fileNameDisplay.textContent = this.files[0].name;
-        }
-      };
-
-      dropZone.ondragover = function (e) {
-        e.preventDefault();
-        this.classList.add("dragover");
-      };
-
-      dropZone.ondragleave = function () {
-        this.classList.remove("dragover");
-      };
-
-      dropZone.ondrop = function (e) {
-        e.preventDefault();
-        this.classList.remove("dragover");
-        if (e.dataTransfer.files.length > 0) {
-          imageInput.files = e.dataTransfer.files;
-          fileNameDisplay.textContent = e.dataTransfer.files[0].name;
-        }
-      };
-
       // Form Submission
-      form.onsubmit = function (e) {
+      form.onsubmit = async function (e) {
         e.preventDefault();
 
         // Construct start date from inputs
@@ -1770,22 +1726,22 @@
           }
         }
 
-        const formData = new FormData();
-        formData.append("title", document.getElementById("title").value);
+        const title = document.getElementById("title").value;
 
         // Get markdown content from EasyMDE
         let markdownContent = "";
         if (easyMDE) {
           markdownContent = easyMDE.value();
         }
-        formData.append("content", markdownContent);
 
-        // Add groups if any selected
+        // Groups
+        let group = [];
         if (selectedGroups.size > 0) {
-          formData.append("group", JSON.stringify(Array.from(selectedGroups)));
+          group = Array.from(selectedGroups);
         }
 
-        // Add color only if user has explicitly selected a custom color
+        // Color
+        let color = null;
         const selectedColor = document.getElementById("eventColorText").value;
         const isUsingDefault = window.useDefaultColor
           ? window.useDefaultColor()
@@ -1795,65 +1751,52 @@
           selectedColor &&
           /^#[0-9A-Fa-f]{6}$/i.test(selectedColor)
         ) {
-          formData.append("color", selectedColor.toLowerCase());
+          color = selectedColor.toLowerCase();
         }
 
-        formData.append("start", startDate);
-        if (endDate) {
-          formData.append("end", endDate);
-        }
-        // Don't send type - it will be auto-added in UI based on presence of end date
+        // Prepare event data
+        const eventData = {
+          title,
+          content: markdownContent,
+          start: startDate,
+          end: endDate, // Firestore handles null fine
+          group: group.length > 0 ? group : null,
+          color: color,
+        };
 
+        // Image handling
         const imageSource = document.querySelector(
           'input[name="imageSource"]:checked'
         ).value;
-        formData.append("imageSource", imageSource);
 
-        if (imageSource === "upload") {
-          const fileInput = document.getElementById("imageFile");
-          if (fileInput.files[0]) {
-            formData.append("imageFile", fileInput.files[0]);
-          }
-        } else if (imageSource === "url") {
-          formData.append(
-            "imageUrl",
-            document.getElementById("imageUrl").value
-          );
+        if (imageSource === "url") {
+          eventData.imageUrl = document.getElementById("imageUrl").value;
+        } else if (imageSource === "none") {
+          eventData.imageUrl = null; // Remove image
         }
+        // If 'keep', we don't include imageUrl in eventData, so it won't be updated
 
         const errorDiv = document.getElementById("errorMessage");
         errorDiv.style.display = "none";
         errorDiv.textContent = "";
 
-        const url = currentEditId
-          ? `/api/events/${currentEditId}`
-          : "/api/events/create";
-        const method = currentEditId ? "PUT" : "POST";
+        try {
+          if (currentEditId) {
+            // Update existing event
+            await updateEventInFirestore(firebaseDb, currentEditId, eventData);
+          } else {
+            // Create new event
+            eventData.id = Date.now(); // Generate client-side ID
+            await saveEventToFirestore(firebaseDb, eventData);
+          }
 
-        fetch(url, {
-          method: method,
-          body: formData,
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              console.log("Success:", data);
-              modal.style.display = "none";
-              form.reset();
-              fileNameDisplay.textContent = "";
-              currentEditId = null; // Reset edit ID
-              // Reload events
-              loadEvents();
-            } else {
-              errorDiv.textContent = "Error: " + data.error;
-              errorDiv.style.display = "block";
-            }
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            errorDiv.textContent = "Network or Server Error";
-            errorDiv.style.display = "block";
-          });
+          closeModal();
+          loadEvents(); // Reload to refresh timeline
+        } catch (error) {
+          console.error("Error saving event:", error);
+          errorDiv.style.display = "block";
+          errorDiv.textContent = "Failed to save event: " + error.message;
+        }
       };
 
       // Helper function to parse date strings including BC dates
@@ -1932,50 +1875,65 @@
         document.getElementById("eventDetails").style.display = "none";
       }
 
-      function loadEvents() {
-        fetch("events.json")
-          .then((response) => response.json())
-          .then((data) => {
-            // Store raw events for filtering
-            allEvents = data;
+      async function loadEvents() {
+        try {
+          const data = await loadEventsFromFirestore(firebaseDb);
+          
+          // Store raw events for filtering
+          allEvents = data;
 
-            // Render group checkboxes and filter buttons
-            renderGroupCheckboxes();
-            renderGroupFilters();
+          // Render group checkboxes and filter buttons
+          renderGroupCheckboxes();
+          renderGroupFilters();
 
-            // Preprocess events: add type="point" for events with only start date
-            // and convert date strings to Date objects for vis-timeline
-            const processedData = data.map((event) => {
-              const processed = { ...event };
+          // Preprocess events: add type="point" for events with only start date
+          // and convert date strings to Date objects for vis-timeline
+          const processedData = data.map((event) => {
+            const processed = { ...event };
 
-              // Convert start date string to Date object
-              if (event.start) {
-                processed.start = parseDateString(event.start);
-              }
-
-              // Convert end date string to Date object
-              if (event.end) {
-                processed.end = parseDateString(event.end);
-              } else {
-                // Add type="point" for events with only start date
-                processed.type = "point";
-              }
-
-              // Apply color styling if color is specified
-              if (event.color && /^#[0-9A-Fa-f]{6}$/i.test(event.color)) {
-                processed.style = `background-color: ${event.color};`;
-              }
-
-              return processed;
-            });
-
-            items = new DataSet(processedData);
-            if (timeline) {
-              timeline.setItems(items);
-            } else {
-              createTimeline();
+            // Convert start date string to Date object
+            if (event.start) {
+              processed.start = parseDateString(event.start);
             }
+
+            // Convert end date string to Date object
+            if (event.end) {
+              processed.end = parseDateString(event.end);
+            } else {
+              // Add type="point" for events with only start date
+              processed.type = "point";
+            }
+
+            // Apply custom color if specified
+            if (event.color) {
+              processed.style = `background-color: ${event.color};`;
+            }
+
+            // Map imageUrl to image for vis-timeline
+            if (event.imageUrl) {
+              processed.image = event.imageUrl;
+            }
+
+            return processed;
           });
+
+          if (!items) { // Initialize DataSet if it doesn't exist
+            items = new DataSet(processedData);
+          } else {
+            items.clear();
+            items.add(processedData);
+          }
+
+          if (timeline) {
+            timeline.setItems(items);
+          } else {
+            createTimeline();
+          }
+
+        } catch (error) {
+          console.error("Error loading events:", error);
+          alert("Failed to load events from Firestore. Please check console for details.");
+        }
       }
 
       function createTimeline() {
@@ -2069,7 +2027,7 @@
         return `${year}-${month}-${day}`;
       }
 
-      function saveEvents() {
+      async function saveEvents() {
         const data = items.get();
 
         // Convert Date objects back to date strings for JSON storage
@@ -2079,20 +2037,13 @@
           end: event.end ? formatDateToString(event.end) : undefined,
         }));
 
-        fetch("/api/events", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(dataToSave),
-        })
-          .then((response) => response.text())
-          .then((data) => {
-            console.log("Success:", data);
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-          });
+        try {
+          await saveAllEventsToFirestore(firebaseDb, dataToSave);
+          console.log("Success: Events saved to Firestore");
+        } catch (error) {
+          console.error("Error saving events:", error);
+          alert("Failed to save events to Firestore. Please check console.");
+        }
       }
 
       // Initial Load
@@ -2575,5 +2526,8 @@
         if (tooltip) tooltip.remove();
       });
     </script>
+
+    <!-- Firebase Bootstrap Container -->
+    <div id="firebase-bootstrap-container"></div>
   </body>
 </html>
