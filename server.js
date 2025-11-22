@@ -320,7 +320,9 @@ app.use(express.static(web, {
 
 if (process.env.NODE_ENV !== 'test') {
     app.listen(port, host, () => {
-        log(`\n 🌎  Server is running http://${host}:${port}\n`);
+        const startTime = new Date().toLocaleString();
+        log(`\n 🌎  Server is running http://${host}:${port}`);
+        log(` ⏰  Started at: ${startTime}\n`);
     });
 }
 
