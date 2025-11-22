@@ -61,7 +61,7 @@ jobs:
 
       - name: Prune node modules
         run: |
-          /bin/bash .github/prune-node-modules.sh node_modules/vis-timeline/dist node_modules/vis-timeline/styles node_modules/easymde/dist node_modules/marked/lib node_modules/firebase node_modules/@firebase
+          /bin/bash .github/prune-node-modules.sh node_modules/vis-timeline/dist node_modules/vis-timeline/styles node_modules/easymde/dist node_modules/marked/lib
           ls -la node_modules
 
       - name: Upload artifact
