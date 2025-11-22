@@ -57,7 +57,9 @@ export function bootstrapFirebase({ containerId }) {
         const popupContent = doc.getElementById("popup");
 
         if (!popupContent) {
-          throw new Error("Could not find #popup element in firebaseSetup.html");
+          throw new Error(
+            "Could not find #popup element in firebaseSetup.html"
+          );
         }
 
         // Inject styles if present in the fetched HTML head
@@ -233,8 +235,18 @@ export function bootstrapFirebase({ containerId }) {
           }
         }
       });
-  const unbind = vanillaTabs.bind();
-  vanillaTabs.active();
+      const unbind = vanillaTabs.bind();
+      vanillaTabs.active();
+
+      {
+        const el = document.querySelector("#authorised-domains");
+        if (el) {
+          el.value = window.location.host;
+          el.addEventListener("click", () => {
+            el.select();
+          });
+        }
+      }
     }
   });
 }

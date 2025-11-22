@@ -151,7 +151,7 @@
         <div data-vanilla-tabs>
           <div data-buttons>
             <span class="active">Setting up the first time</span>
-            <span>Not the first time</span>
+            <span>I'm here not the first time</span>
           </div>
           <div data-tabs>
             <div>
@@ -292,25 +292,6 @@
                   there is no need for that)
                 </li>
                 <li>then press <strong>Register app</strong></li>
-                <li>
-                  ... copy just object like
-                  <pre>
-{
-    apiKey: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    authDomain: "history-xxxxx.firebaseapp.com",
-    databaseURL: "https://history-xxxxx-default-xxxx.firebaseio.com",
-    projectId: "history-xxxxx",
-    storageBucket: "history-xxxxx.firebasestorage.app",
-    messagingSenderId: "xxxxxxxxxxxx",
-    appId: "1:xxxxxxxxxxxx:web:xxxxxxxxxxxxxxxxxxxxxx",
-    measurementId: "G-xxxxxxxxxxx"
-}</pre
-                  >
-                  and keep it safe. You will need it to connect this
-                  <strong>History app</strong> to allow it to save data to your
-                  Firebase database.
-                </li>
-                <li>then press <strong>Continue to the console</strong></li>
               </ol>
               <h3>Setup access Rules</h3>
               <ol>
@@ -344,6 +325,31 @@ service cloud.firestore {
                   project
                 </li>
               </ol>
+              <h3>Setup Authorised domains</h3>
+              <ol>
+                <li>
+                  Go to
+                  <a href="https://console.firebase.google.com/" target="_blank"
+                    >Firebase Console</a
+                  >
+                </li>
+                <li>
+                  Expand on the left <strong>Build</strong> and select
+                  <strong>Authentication</strong>
+                </li>
+                <li>Go to tab <strong>Settings</strong></li>
+                <li>Go to section <stron>Authorised domains</stron></li>
+                <li>Click <strong>Add domain</strong></li>
+                <li>
+                  Paste <input id="authorised-domains" /> and click
+                  <strong>Add</strong>
+                </li>
+              </ol>
+
+              <alert-box>
+                Now scroll up and do steps in the second tab
+                <strong>"I'm here not the first time"</strong>
+              </alert-box>
             </div>
             <div>
               <h3>Fetch Config Object</h3>
@@ -379,7 +385,9 @@ service cloud.firestore {
     appId: "1:xxxxxxxxxxxx:web:xxxxxxxxxxxxxxxxxxxxxx",
     measurementId: "G-xxxxxxxxxxx"
 }</pre
-                  > and use it below in section <strong>Firebase Config Object</strong>
+                  >
+                  and use it below in section
+                  <strong>Firebase Config Object</strong>
                 </li>
               </ol>
             </div>
@@ -424,6 +432,16 @@ service cloud.firestore {
     <script>
       const unbind = vanillaTabs.bind();
       vanillaTabs.active();
+
+      {
+        const el = document.querySelector("#authorised-domains");
+        if (el) {
+          el.value = window.location.host;
+          el.addEventListener("click", () => {
+            el.select();
+          });
+        }
+      }
     </script>
     <script src="https://stopsopa.github.io/alert-webcomponent/alert-box.js"></script>
   </body>
