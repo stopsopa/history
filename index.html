@@ -681,6 +681,50 @@
       // Initialize auto-colors for timeline items
       autocolors('[data-id]');
 
+
+      {
+
+        let globalId;
+        // Width preservation on hover: measure, then inject dynamic style rule
+        const hoverStyleElement = document.createElement('style');
+        document.head.appendChild(hoverStyleElement);
+  
+        document.body.addEventListener('mouseenter', (e) => {
+          if (e.target.hasAttribute('data-id')) {
+            const currentId = globalId = e.target.getAttribute('data-id');
+            const currentWidth = e.target.offsetWidth;
+            
+            // Update style content
+            console.log(hoverStyleElement.textContent = `[data-id="${currentId}"] { width: auto !important; }`);
+  
+            setTimeout(() => {
+              if (globalId !== currentId) return;
+
+              const autoWidth = e.target.offsetWidth;
+    
+              console.log('currentWidth', currentWidth, 'autoWidth', autoWidth);
+    
+              hoverStyleElement.textContent = '';
+    
+              setTimeout(() => {
+                if (globalId !== currentId) return;
+      
+                if (autoWidth > currentWidth) {
+                  hoverStyleElement.textContent = `[data-id="${currentId}"] { width: ${autoWidth}px !important; }`;
+                }
+              }, 50);
+            }, 50);
+          }
+        }, true);
+  
+        document.body.addEventListener('mouseleave', (e) => {
+          if (e.target.hasAttribute('data-id')) {
+            hoverStyleElement.textContent = '';
+          }
+        }, true);
+      }
+
+
       const container = document.getElementById("visualization");
       const addEventBtn = document.getElementById("add-event-btn");
       const modal = document.getElementById("eventModal");
