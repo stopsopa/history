@@ -226,13 +226,6 @@
         background: none;
       }
 
-      .compare-ids {
-        margin-bottom: 15px;
-        font-family: monospace;
-      }
-
-      .compare-id-1 { color: #cc0000; font-weight: bold; }
-      .compare-id-2 { color: #0000cc; font-weight: bold; }
       .vis-item .vis-item-overflow:hover {
         overflow: visible;
       }
@@ -1891,22 +1884,14 @@
 
 
 
-        // Display IDs
-        const idsDiv = document.createElement('div');
-        idsDiv.className = 'compare-ids';
+
+
+        // Visualization Logic
+        const svgContainer = document.createElement('div');
         
         const ev1 = items.get(selectedEventIds[0]);
         const ev2 = selectedEventIds[1] ? items.get(selectedEventIds[1]) : null;
 
-        let html = `<span class="compare-id-1">A: ${ev1 ? ev1.title : '???'}</span>`;
-        if (ev2) {
-            html += ` <br> <span class="compare-id-2">C: ${ev2.title}</span>`;
-        }
-        idsDiv.innerHTML = html;
-        container.appendChild(idsDiv);
-
-        // Visualization Logic
-        const svgContainer = document.createElement('div');
         // Simple SVG visualization
         const width = container.clientWidth - 40;
         // const height = 200; // Moved inside renderComparison to be adjustable
