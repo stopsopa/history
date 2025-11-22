@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Firebase Setup</title>
+    <style>
+      #popup {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        color: #333;
+        max-width: 700px;
+        width: 90%;
+        margin: 40px auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      }
+      #popup h2 {
+        margin-top: 0;
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      #popup .subtitle {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 15px;
+      }
+      #popup details {
+        margin: 15px 0;
+        padding: 10px;
+        background: #f5f5f5;
+        border-radius: 5px;
+      }
+      #popup summary {
+        cursor: pointer;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+      #popup ol {
+        font-size: 14px;
+        line-height: 1.6;
+        padding-left: 20px;
+      }
+      #popup ul {
+        margin: 5px 0;
+        padding-left: 20px;
+      }
+      #popup code {
+        background: #e0e0e0;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-family: monospace;
+      }
+      #popup pre {
+        background: #e0e0e0;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+        font-family: monospace;
+        margin: 5px 0;
+      }
+      #popup a {
+        color: #2196f3;
+        text-decoration: none;
+      }
+      #popup a:hover {
+        text-decoration: underline;
+      }
+      #popup .config-section {
+        margin-top: 15px;
+      }
+      #popup label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+      }
+      #popup textarea {
+        width: 100%;
+        font-family: monospace;
+        font-size: 12px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      #popup .actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      #popup button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+      }
+      #popup #init-firebase-btn {
+        background: #4caf50;
+        color: white;
+      }
+      #popup #clear-config-btn {
+        background: #f44336;
+        color: white;
+      }
+      #popup #login-btn {
+        padding: 10px 20px;
+        background: #2196f3;
+        color: white;
+      }
+      #popup #error-msg {
+        color: red;
+        font-size: 14px;
+      }
+      #popup #login-section {
+        display: none;
+        margin-top: 15px;
+        padding: 15px;
+        background: #e8f5e9;
+        border-radius: 5px;
+      }
+      #popup .success-msg {
+        margin: 0 0 10px 0;
+        color: #2e7d32;
+      }
+    </style>
+    <link rel="stylesheet" href="lib/vanilla-tabs.css" />
+  </head>
+  <body>
+    <div id="popup">
+      <h2>Connect Your Firebase Project</h2>
+      <p class="subtitle">
+        This app uses your own Firebase project to store your timeline data.
+      </p>
+      <details open>
+        <summary>📋 Setup Instructions</summary>
+
+        <div data-vanilla-tabs>
+          <div data-buttons>
+            <span class="active">Setting up the first time</span>
+            <span>Not the first time</span>
+          </div>
+          <div data-tabs>
+            <div>
+              <ol>
+                <li>
+                  Go to
+                  <a href="https://console.firebase.google.com/" target="_blank"
+                    >Firebase Console</a
+                  >
+                </li>
+                <li>
+                  Click <strong>"Create a new Firebase project"</strong> (or
+                  select existing project)
+                </li>
+                <li>
+                  Enable <strong>Google Authentication</strong>:
+                  <ul>
+                    <li>
+                      Go to <strong>Authentication → Sign-in method</strong>
+                    </li>
+                    <li>Click <strong>Google</strong> and enable it</li>
+                    <li>
+                      Add your domain to
+                      <strong>Authorized domains</strong> (e.g.,
+                      <code>localhost</code> or your GitHub Pages URL)
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  Enable <strong>Firestore Database</strong>:
+                  <ul>
+                    <li>
+                      Go to <strong>Build</strong> ->
+                      <strong>Firestore Database</strong> in the left menu
+                    </li>
+                    <li>Click <strong>"Create database"</strong></li>
+                    <li>
+                      Choose <strong>"Start in locked mode"</strong> (for now)
+                    </li>
+                    <li>Select a location and click <strong>Enable</strong></li>
+                    <li>
+                      Click next to <strong>Project Overview</strong> ->
+                      <strong>Cog icon</strong>
+                    </li>
+                    <li>Scroll down to <strong>"Your apps"</strong></li>
+                    <li>Click <strong>Project Settings</strong></li>
+                    <li>
+                      At the bottom you will see section
+                      <strong>Your apps</strong>
+                    </li>
+                    <li>
+                      Click below
+                      <strong>There are no apps in your project</strong> ->
+                      <strong>Web</strong>
+                    </li>
+                    <li>Register your app (give it a name)</li>
+                    <li>
+                      DON'T turn on
+                      <strong>Also set up Firebase Hosting</strong> - no need
+                      for that
+                    </li>
+                    <li>Press <strong>Register app</strong></li>
+                    <li>From step <strong>Add Firebase SDK</strong> ...</li>
+                    <li>
+                      ... pick radio button
+                      <strong>use a &lt;script&gt; tag</strong>
+                    </li>
+                    <li>
+                      ... copy just object like
+                      <pre>
+{
+    apiKey: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    authDomain: "history-xxxxx.firebaseapp.com",
+    databaseURL: "https://history-xxxxx-default-xxxx.firebaseio.com",
+    projectId: "history-xxxxx",
+    storageBucket: "history-xxxxx.firebasestorage.app",
+    messagingSenderId: "xxxxxxxxxxxx",
+    appId: "1:xxxxxxxxxxxx:web:xxxxxxxxxxxxxxxxxxxxxx",
+    measurementId: "G-xxxxxxxxxxx"
+}</pre
+                      >
+                    </li>
+                    <li>Paste that below ... BUT WAIT!</li>
+                    <li>
+                      Continue in with the setup instructions in the firebase
+                      setup ...
+                    </li>
+                    <li>Press <strong>Continue to the console</strong></li>
+                    <li>
+                      Then go to Firebase console
+                      <a href="https://console.firebase.google.com/">link</a>
+                    </li>
+                    <li>
+                      Go to <strong>Build</strong> ->
+                      <strong>Authentication</strong> ->
+                      <strong>Get started</strong>
+                    </li>
+                    <li>Click <strong>Google</strong></li>
+                    <li>Click <strong>Enable</strong></li>
+                    <li>
+                      Below in field
+                      <strong>Support email for project</strong> select your
+                      email
+                    </li>
+                    <li>Hit <strong>Save</strong></li>
+                    <li>
+                      Let's configure access rules, go to
+                      <strong>Firestore Database</strong> ->
+                      <strong>Rules</strong>
+                    </li>
+                    <li>
+                      paste
+                      <pre>
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      // Allow read/write only if the user is logged in
+      allow read, write: if request.auth != null;
+    }
+  }
+}</pre
+                      >
+                    </li>
+                  </ul>
+                </li>
+              </ol>
+            </div>
+            <div>
+              my stuff for tab 2
+              <br />
+              <img src="//i.imgur.com/SkkKinS.jpg" width="110" />
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <div class="config-section">
+        <label>Firebase Config JSON:</label>
+        <textarea
+          id="firebase-config"
+          rows="10"
+          placeholder='Paste your Firebase config here (JSON or JS object), e.g.:
+{
+  apiKey: "AIza...",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project",
+  ...
+}'
+        ></textarea>
+      </div>
+
+      <div class="actions">
+        <button id="init-firebase-btn">Initialize Firebase</button>
+        <!-- Clear config button will be injected here if needed or handled via JS display toggling -->
+        <button id="clear-config-btn" style="display: none">
+          Clear Saved Config
+        </button>
+        <span id="error-msg"></span>
+      </div>
+
+      <div id="login-section">
+        <p class="success-msg">✅ Firebase initialized successfully!</p>
+        <button id="login-btn">🔐 Login with Google</button>
+      </div>
+    </div>
+    <script src="lib/vanilla-tabs.js"></script>
+    <script>
+      const unbind = vanillaTabs.bind();
+      vanillaTabs.active();
+    </script>
+  </body>
+</html>
