@@ -2137,7 +2137,11 @@
                 const minX = Math.min(p1.x, p2.x);
                 const maxX = Math.max(p1.x, p2.x);
                 const midX = (minX + maxX) / 2;
-                const duration = calculateDuration(formatDateToString(p1.time), formatDateToString(p2.time));
+                
+                // Ensure dates are in chronological order (earlier date first)
+                const earlierDate = p1.time < p2.time ? p1.time : p2.time;
+                const laterDate = p1.time < p2.time ? p2.time : p1.time;
+                const duration = calculateDuration(formatDateToString(earlierDate), formatDateToString(laterDate));
                 
                 let s = `<line x1="${minX}" y1="${yLevel}" x2="${maxX}" y2="${yLevel}" stroke="#999" stroke-width="1" />`;
                 // Ticks
