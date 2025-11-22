@@ -1896,6 +1896,14 @@
         // Two events selected - Show full comparison
         container.className = 'active';
 
+        // Helper to format duration
+        const formatDiff = (ms) => {
+            const absMs = Math.abs(ms);
+            const days = Math.floor(absMs / (1000 * 60 * 60 * 24));
+            const years = (days / 365.25).toFixed(1);
+            return `${days} days (${years}y)`;
+        };
+
         // Add Close Button
         const closeBtn = document.createElement('button');
         closeBtn.className = 'compare-close-btn';
@@ -1937,23 +1945,81 @@
         addDates(ev1);
         addDates(ev2);
         
-        // Find min/max
-        const minDate = new Date(Math.min(...dates));
-        const maxDate = new Date(Math.max(...dates));
+        // Ordinal Layout Algorithm
+        // 1. Collect all significant time points
+        let timePoints = [];
+        timePoints.push({ time: ev1.start.getTime(), type: 'start', event: 1 });
+        if (ev1.end) timePoints.push({ time: ev1.end.getTime(), type: 'end', event: 1 });
+        else timePoints.push({ time: ev1.start.getTime(), type: 'end', event: 1 }); // Point event
         
-        // Add some padding (10%)
-        const totalDuration = maxDate - minDate;
-        const padding = totalDuration * 0.1 || 1000 * 60 * 60 * 24; // Default 1 day if 0
-        const plotMin = new Date(minDate.getTime() - padding);
-        const plotMax = new Date(maxDate.getTime() + padding);
-        const plotDuration = plotMax - plotMin;
+        if (ev2) {
+            timePoints.push({ time: ev2.start.getTime(), type: 'start', event: 2 });
+            if (ev2.end) timePoints.push({ time: ev2.end.getTime(), type: 'end', event: 2 });
+            else timePoints.push({ time: ev2.start.getTime(), type: 'end', event: 2 });
+        }
+
+        // 2. Sort points
+        timePoints.sort((a, b) => a.time - b.time);
+
+        // 3. Assign initial X coordinates (distribute evenly or with min gap)
+        // We want to preserve order but ensure readability.
+        // Let's assign a "rank" to each unique time.
+        let uniqueTimes = [...new Set(timePoints.map(p => p.time))].sort((a, b) => a - b);
+        let timeToX = new Map();
+        
+        // Base spacing
+        const baseSpacing = 150; 
+        let currentX = 50; // Padding left
+
+        uniqueTimes.forEach((t, i) => {
+            timeToX.set(t, currentX);
+            currentX += baseSpacing;
+        });
+
+        // 4. Enforce minimum width constraints
+        // We need to ensure that for each event, x(End) - x(Start) >= TextWidth
+        
+        function ensureWidth(ev, evId) {
+            if (!ev) return;
+            const startT = ev.start.getTime();
+            const endT = ev.end ? ev.end.getTime() : startT;
+            
+            const startX = timeToX.get(startT);
+            const endX = timeToX.get(endT);
+            
+            const textLen = (ev.title || '').length * 10; // Approx char width
+            const minW = Math.max(150, textLen);
+            
+            if (endX - startX < minW) {
+                const diff = minW - (endX - startX);
+                // Shift all times >= endT by diff
+                // But wait, if we shift endT, we must shift everything after it too to preserve order
+                // And we must update the map
+                
+                // Find index of endT in uniqueTimes
+                const endIndex = uniqueTimes.indexOf(endT);
+                
+                // Update all subsequent times
+                for (let i = endIndex; i < uniqueTimes.length; i++) {
+                    const t = uniqueTimes[i];
+                    timeToX.set(t, timeToX.get(t) + diff);
+                }
+            }
+        }
+
+        ensureWidth(ev1, 1);
+        if (ev2) ensureWidth(ev2, 2);
+
+        // Recalculate width for SVG container if needed
+        const maxX = Math.max(...Array.from(timeToX.values())) + 50;
+        const finalWidth = Math.max(width, maxX);
 
         function getX(date) {
-            return ((date - plotMin) / plotDuration) * width;
+            return timeToX.get(date.getTime());
         }
 
         // SVG Construction
-        let svg = `<svg width="${width}" height="${height}" style="overflow: visible;">`;
+        let svg = `<svg width="${finalWidth}" height="${height}" style="overflow: visible;">`;
         
         // Defs for markers
         svg += `<defs>
@@ -1981,6 +2047,10 @@
             svg += `<text x="${x1End}" y="${y1 - 10}" text-anchor="middle" font-size="12">B</text>`;
             svg += `<text x="${x1End}" y="${y1 + 20}" text-anchor="middle" font-size="10" fill="#666">${formatDateForDisplay(formatDateToString(ev1.end))}</text>`;
             svg += `<circle cx="${x1End}" cy="${y1}" r="4" fill="white" stroke="blue" stroke-width="2" />`;
+            
+            // Duration Label
+            const diff1 = ev1.end.getTime() - ev1.start.getTime();
+            svg += `<text x="${(x1Start + x1End) / 2}" y="${y1 + 15}" text-anchor="middle" font-size="11" fill="#444" font-style="italic">${formatDiff(diff1)}</text>`;
         }
 
         // Draw Event 2 (Bottom) if exists
@@ -2002,6 +2072,10 @@
                 svg += `<text x="${x2End}" y="${y2 - 10}" text-anchor="middle" font-size="12">D</text>`;
                 svg += `<text x="${x2End}" y="${y2 + 20}" text-anchor="middle" font-size="10" fill="#666">${formatDateForDisplay(formatDateToString(ev2.end))}</text>`;
                 svg += `<circle cx="${x2End}" cy="${y2}" r="4" fill="white" stroke="purple" stroke-width="2" />`;
+                
+                // Duration Label
+                const diff2 = ev2.end.getTime() - ev2.start.getTime();
+                svg += `<text x="${(x2Start + x2End) / 2}" y="${y2 + 15}" text-anchor="middle" font-size="11" fill="#444" font-style="italic">${formatDiff(diff2)}</text>`;
             }
 
             // Draw dotted vertical lines for all points
@@ -2025,13 +2099,7 @@
                 { label: 'D', time: ev2.end, x: x2End, y: y2, exists: !!ev2.end }
             ];
 
-            // Helper to format duration
-            const formatDiff = (ms) => {
-                const absMs = Math.abs(ms);
-                const days = Math.floor(absMs / (1000 * 60 * 60 * 24));
-                const years = (days / 365.25).toFixed(1);
-                return `${days} days (${years}y)`;
-            };
+
 
             // Draw dimension lines
             let dimY = 140;
