@@ -277,6 +277,7 @@
                   <strong>Cog icon</strong> and select
                   <strong>Project Settings</strong>
                 </li>
+                <li>Go to tab <strong>General</strong></li>
                 <li>Scroll down to <strong>Your apps</strong></li>
                 <li>
                   Click below
@@ -316,14 +317,6 @@ service cloud.firestore {
                   >
                   and hit <strong>Publish</strong>
                 </li>
-                <li>
-                  Then take code from section
-                  <strong>Setup the App</strong> step 7 and paste below in
-                  section <strong>Firebase Config Object</strong> and press
-                  <strong>Initialize Firebase</strong> then in the popup window
-                  login using the same account where you created your Firebase
-                  project
-                </li>
               </ol>
               <h3>Setup Authorised domains</h3>
               <ol>
@@ -361,7 +354,9 @@ service cloud.firestore {
                   >
                 </li>
                 <li>
-                  You might be greeted with landing page <strong>Welcome back to Firebase!</strong> then select your project on the right side
+                  You might be greeted with landing page
+                  <strong>Welcome back to Firebase!</strong> then select your
+                  project on the right side
                 </li>
                 <li>
                   Next to <strong>Project Overview</strong> hit
@@ -420,9 +415,7 @@ service cloud.firestore {
       <div class="actions">
         <button id="init-firebase-btn">Initialize Firebase</button>
         <!-- Clear config button will be injected here if needed or handled via JS display toggling -->
-        <button id="clear-config-btn" style="display: none">
-          Reset
-        </button>
+        <button id="clear-config-btn" style="display: none">Reset</button>
         <span id="error-msg"></span>
       </div>
 
