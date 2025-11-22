@@ -4,135 +4,144 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Firebase Setup</title>
-    <style>
-      #popup {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
-        color: #333;
-        max-width: 700px;
-        width: 90%;
-        margin: 40px auto;
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-      }
-      #popup h2 {
-        margin-top: 0;
-        font-size: 24px;
-        margin-bottom: 10px;
-      }
-      #popup .subtitle {
-        color: #666;
-        font-size: 14px;
-        margin-bottom: 15px;
-      }
-      #popup details {
-        margin: 15px 0;
-        padding: 10px;
-        background: #f5f5f5;
-        border-radius: 5px;
-      }
-      #popup summary {
-        cursor: pointer;
-        font-weight: bold;
-        margin-bottom: 10px;
-      }
-      #popup ol {
-        font-size: 14px;
-        line-height: 1.6;
-        padding-left: 20px;
-      }
-      #popup ul {
-        margin: 5px 0;
-        padding-left: 20px;
-      }
-      #popup code {
-        background: #e0e0e0;
-        padding: 2px 4px;
-        border-radius: 3px;
-        font-family: monospace;
-      }
-      #popup pre {
-        background: #e0e0e0;
-        padding: 10px;
-        border-radius: 5px;
-        overflow-x: auto;
-        font-family: monospace;
-        margin: 5px 0;
-      }
-      #popup a {
-        color: #2196f3;
-        text-decoration: none;
-      }
-      #popup a:hover {
-        text-decoration: underline;
-      }
-      #popup .config-section {
-        margin-top: 15px;
-      }
-      #popup label {
-        font-weight: bold;
-        display: block;
-        margin-bottom: 5px;
-      }
-      #popup textarea {
-        width: 100%;
-        font-family: monospace;
-        font-size: 12px;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-      }
-      #popup .actions {
-        margin-top: 10px;
-        display: flex;
-        gap: 10px;
-        align-items: center;
-      }
-      #popup button {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: bold;
-        font-size: 14px;
-      }
-      #popup #init-firebase-btn {
-        background: #4caf50;
-        color: white;
-      }
-      #popup #clear-config-btn {
-        background: #f44336;
-        color: white;
-      }
-      #popup #login-btn {
-        padding: 10px 20px;
-        background: #2196f3;
-        color: white;
-      }
-      #popup #error-msg {
-        color: red;
-        font-size: 14px;
-      }
-      #popup #login-section {
-        display: none;
-        margin-top: 15px;
-        padding: 15px;
-        background: #e8f5e9;
-        border-radius: 5px;
-      }
-      #popup .success-msg {
-        margin: 0 0 10px 0;
-        color: #2e7d32;
-      }
-    </style>
     <link rel="stylesheet" href="lib/vanilla-tabs.css" />
   </head>
   <body>
     <div id="popup">
-      <h2>Connect Your Firebase Project</h2>
+      <style>
+        #popup {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            Helvetica, Arial, sans-serif;
+          color: #333;
+          max-width: 700px;
+          width: 90%;
+          margin: 40px auto;
+          background: white;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        #popup h2 {
+          margin-top: 0;
+          font-size: 24px;
+          margin-bottom: 10px;
+        }
+        #popup .subtitle {
+          color: #666;
+          font-size: 14px;
+          margin-bottom: 15px;
+        }
+        #popup details {
+          margin: 15px 0;
+          padding: 10px;
+          background: #f5f5f5;
+          border-radius: 5px;
+        }
+        #popup summary {
+          cursor: pointer;
+          font-weight: bold;
+          margin-bottom: 10px;
+        }
+        #popup ol {
+          font-size: 14px;
+          line-height: 1.6;
+          padding-left: 20px;
+        }
+        #popup ul {
+          margin: 5px 0;
+          padding-left: 20px;
+        }
+        #popup code {
+          background: #e0e0e0;
+          padding: 2px 4px;
+          border-radius: 3px;
+          font-family: monospace;
+        }
+        #popup pre {
+          background: #e0e0e0;
+          padding: 10px;
+          border-radius: 5px;
+          overflow-x: auto;
+          font-family: monospace;
+          margin: 5px 0;
+        }
+        #popup a {
+          color: #2196f3;
+          text-decoration: none;
+        }
+        #popup a:hover {
+          text-decoration: underline;
+        }
+        #popup .config-section {
+          margin-top: 15px;
+        }
+        #popup label {
+          font-weight: bold;
+          display: block;
+          margin-bottom: 5px;
+        }
+        #popup textarea {
+          width: 100%;
+          font-family: monospace;
+          font-size: 12px;
+          padding: 8px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          box-sizing: border-box;
+        }
+        #popup .actions {
+          margin-top: 10px;
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        }
+        #popup button {
+          padding: 8px 16px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-weight: bold;
+          font-size: 14px;
+        }
+        #popup #init-firebase-btn {
+          background: #4caf50;
+          color: white;
+        }
+        #popup #clear-config-btn {
+          background: #f44336;
+          color: white;
+        }
+        #popup #login-btn {
+          padding: 10px 20px;
+          background: #2196f3;
+          color: white;
+        }
+        #popup #error-msg {
+          color: red;
+          font-size: 14px;
+        }
+        #popup #login-section {
+          display: none;
+          margin-top: 15px;
+          padding: 15px;
+          background: #e8f5e9;
+          border-radius: 5px;
+        }
+        #popup .success-msg {
+          margin: 0 0 10px 0;
+          color: #2e7d32;
+        }
+        #popup h3 {
+          margin-top: 6px;
+          margin-bottom: 6px;
+        }
+        #popup ol {
+          margin-top: 2px;
+          margin-bottom: 2px;
+          margin-left: 20px;
+        }
+      </style>
+      <h3>Connect Your Firebase Project</h3>
       <p class="subtitle">
         This app uses your own Firebase project to store your timeline data.
       </p>
@@ -146,6 +155,73 @@
           </div>
           <div data-tabs>
             <div>
+              <h3>Setup a project</h3>
+              <ol>
+                <li>
+                  Go to
+                  <a href="https://console.firebase.google.com/" target="_blank"
+                    >Firebase Console</a
+                  >
+                </li>
+
+                <li>
+                  On the left click big button
+                  <strong>Get started by setting up a Firebase project</strong>
+                </li>
+                <li>
+                  On the page
+                  <strong>Let's start with a new name for your project</strong>
+                  <ul>
+                    <li>Specify the name for new project</li>
+
+                    <li>Accept firebase terms - checkbox</li>
+                    <li>Hit <strong>Continue</strong></li>
+                  </ul>
+                </li>
+
+                <li>
+                  On the page
+                  <strong>AI assistance for your Firebase project</strong> just
+                  hit <strong>Continue</strong>
+                </li>
+                <li>
+                  On the page
+                  <strong>Google Analytics for your Firebase project</strong>
+                  just hit <strong>Continue</strong>
+                </li>
+                <li>
+                  On the page <strong>Configure Google Analytics</strong>
+                  <ul>
+                    <li>
+                      You can setup analytics loation if you like or <br />
+                      leave default in the dropdown
+                      <strong>Analytics location</strong>
+                    </li>
+                    <li>Accept Google Analytics terms - checkbox</li>
+                    <li>Hit <strong>Continue</strong></li>
+                  </ul>
+                </li>
+
+                <li>
+                  ... Here there will be waiting - probably around a minute
+                  <br />
+                  Wait for message
+                  <strong>Your Firebase project is ready </strong> then hit
+                  <strong>Continue</strong>
+                </li>
+
+                <li>
+                  After that we will endup in
+                  <strong>Project Overview</strong> page
+                </li>
+              </ol>
+              <h3>Setup Authentication</h3>
+              <alert-box type="caution">
+                Somewhere along the way dashboard might ask you to setup two
+                factor authentication - if you don't have it yet. Generally it
+                is good for your Google account security. And it is required to
+                continue with this setup. So follow the steps and setup 2FA.
+              </alert-box>
               <ol>
                 <li>
                   Go to
@@ -154,65 +230,71 @@
                   >
                 </li>
                 <li>
-                  Click <strong>"Create a new Firebase project"</strong> (or
-                  select existing project)
+                  Expand on the left <strong>Build</strong> and select
+                  <strong>Authentication</strong>
+                </li>
+
+                <li>Then hit <strong>Get started</strong></li>
+
+                <li>
+                  In the section <strong>Sign-in providers</strong> click
+                  <strong>Google</strong>
+                </li>
+                <li>Enable it - checkbox top right corner</li>
+                <li>
+                  In the field <strong>Support email for project</strong> there
+                  is only one option to choose from - select it
+                </li>
+
+                <li>Hit <strong>Save</strong></li>
+              </ol>
+              <h3>Create a database</h3>
+              <ol>
+                <li>
+                  Expand on the left <strong>Build</strong> and select
+                  <strong>Firestore Database</strong>
+                </li>
+                <li>Click <strong>"Create database"</strong></li>
+                <li>
+                  In the step <strong>Select edition</strong> choose
+                  <strong>Standard edition</strong> and hit
+                  <strong>Next</strong>
                 </li>
                 <li>
-                  Enable <strong>Google Authentication</strong>:
-                  <ul>
-                    <li>
-                      Go to <strong>Authentication → Sign-in method</strong>
-                    </li>
-                    <li>Click <strong>Google</strong> and enable it</li>
-                    <li>
-                      Add your domain to
-                      <strong>Authorized domains</strong> (e.g.,
-                      <code>localhost</code> or your GitHub Pages URL)
-                    </li>
-                  </ul>
+                  In the step <strong>Database ID & location</strong> you can
+                  choose location and hit <strong>Next</strong>
                 </li>
                 <li>
-                  Enable <strong>Firestore Database</strong>:
-                  <ul>
-                    <li>
-                      Go to <strong>Build</strong> ->
-                      <strong>Firestore Database</strong> in the left menu
-                    </li>
-                    <li>Click <strong>"Create database"</strong></li>
-                    <li>
-                      Choose <strong>"Start in locked mode"</strong> (for now)
-                    </li>
-                    <li>Select a location and click <strong>Enable</strong></li>
-                    <li>
-                      Click next to <strong>Project Overview</strong> ->
-                      <strong>Cog icon</strong>
-                    </li>
-                    <li>Scroll down to <strong>"Your apps"</strong></li>
-                    <li>Click <strong>Project Settings</strong></li>
-                    <li>
-                      At the bottom you will see section
-                      <strong>Your apps</strong>
-                    </li>
-                    <li>
-                      Click below
-                      <strong>There are no apps in your project</strong> ->
-                      <strong>Web</strong>
-                    </li>
-                    <li>Register your app (give it a name)</li>
-                    <li>
-                      DON'T turn on
-                      <strong>Also set up Firebase Hosting</strong> - no need
-                      for that
-                    </li>
-                    <li>Press <strong>Register app</strong></li>
-                    <li>From step <strong>Add Firebase SDK</strong> ...</li>
-                    <li>
-                      ... pick radio button
-                      <strong>use a &lt;script&gt; tag</strong>
-                    </li>
-                    <li>
-                      ... copy just object like
-                      <pre>
+                  In the step <strong>Configure</strong> select
+                  <strong>production mode</strong> and hit
+                  <strong>Create</strong>
+                </li>
+              </ol>
+              <h3>Setup the App</h3>
+              <ol>
+                <li>
+                  Next to <strong>Project Overview</strong> hit
+                  <strong>Cog icon</strong> and select
+                  <strong>Project Settings</strong>
+                </li>
+                <li>Scroll down to <strong>Your apps</strong></li>
+                <li>
+                  Click below
+                  <strong>There are no apps in your project</strong> ->
+                  <strong>Web</strong> icon
+                </li>
+                <li>
+                  In section <strong>Register your app</strong> specify the name
+                  you like for you app (e.g., <code>history</code>)
+                </li>
+                <li>
+                  (don't turn on <strong>Also set up Firebase Hosting</strong> -
+                  there is no need for that)
+                </li>
+                <li>then press <strong>Register app</strong></li>
+                <li>
+                  ... copy just object like
+                  <pre>
 {
     apiKey: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     authDomain: "history-xxxxx.firebaseapp.com",
@@ -223,39 +305,23 @@
     appId: "1:xxxxxxxxxxxx:web:xxxxxxxxxxxxxxxxxxxxxx",
     measurementId: "G-xxxxxxxxxxx"
 }</pre
-                      >
-                    </li>
-                    <li>Paste that below ... BUT WAIT!</li>
-                    <li>
-                      Continue in with the setup instructions in the firebase
-                      setup ...
-                    </li>
-                    <li>Press <strong>Continue to the console</strong></li>
-                    <li>
-                      Then go to Firebase console
-                      <a href="https://console.firebase.google.com/">link</a>
-                    </li>
-                    <li>
-                      Go to <strong>Build</strong> ->
-                      <strong>Authentication</strong> ->
-                      <strong>Get started</strong>
-                    </li>
-                    <li>Click <strong>Google</strong></li>
-                    <li>Click <strong>Enable</strong></li>
-                    <li>
-                      Below in field
-                      <strong>Support email for project</strong> select your
-                      email
-                    </li>
-                    <li>Hit <strong>Save</strong></li>
-                    <li>
-                      Let's configure access rules, go to
-                      <strong>Firestore Database</strong> ->
-                      <strong>Rules</strong>
-                    </li>
-                    <li>
-                      paste
-                      <pre>
+                  >
+                  and keep it safe. You will need it to connect this
+                  <strong>History app</strong> to allow it to save data to your
+                  Firebase database.
+                </li>
+                <li>then press <strong>Continue to the console</strong></li>
+              </ol>
+              <h3>Setup access Rules</h3>
+              <ol>
+                <li>
+                  Go to <strong>Build</strong> ->
+                  <strong>Firebase database</strong>
+                </li>
+                <li>Go to tab <strong>Rules</strong></li>
+                <li>
+                  Then paste
+                  <pre>
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -264,33 +330,78 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
   }
-}</pre
-                      >
-                    </li>
-                  </ul>
+}
+</pre
+                  >
+                  and hit <strong>Publish</strong>
+                </li>
+                <li>
+                  Then take code from section
+                  <strong>Setup the App</strong> step 7 and paste below in
+                  section <strong>Firebase Config Object</strong> and press
+                  <strong>Initialize Firebase</strong> then in the popup window
+                  login using the same account where you created your Firebase
+                  project
                 </li>
               </ol>
             </div>
             <div>
-              my stuff for tab 2
-              <br />
-              <img src="//i.imgur.com/SkkKinS.jpg" width="110" />
+              <h3>Fetch Config Object</h3>
+              <ol>
+                <li>
+                  Go to
+                  <a href="https://console.firebase.google.com/" target="_blank"
+                    >Firebase Console</a
+                  >
+                </li>
+                <li>
+                  Next to <strong>Project Overview</strong> hit
+                  <strong>Cog icon</strong> and select
+                  <strong>Project Settings</strong>
+                </li>
+                <li>Go to tab <strong>General</strong></li>
+                <li>Stroll down to section <strong>Your apps</strong></li>
+                <li>
+                  Click on the app you've created earlier (e.g.,
+                  <code>history</code>)
+                </li>
+                <li>
+                  In the section
+                  <strong>SDK setup and configuration</strong> copy object
+                  <pre>
+{
+    apiKey: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    authDomain: "history-xxxxx.firebaseapp.com",
+    databaseURL: "https://history-xxxxx-default-xxxx.firebaseio.com",
+    projectId: "history-xxxxx",
+    storageBucket: "history-xxxxx.firebasestorage.app",
+    messagingSenderId: "xxxxxxxxxxxx",
+    appId: "1:xxxxxxxxxxxx:web:xxxxxxxxxxxxxxxxxxxxxx",
+    measurementId: "G-xxxxxxxxxxx"
+}</pre
+                  > and use it below in section <strong>Firebase Config Object</strong>
+                </li>
+              </ol>
             </div>
           </div>
         </div>
       </details>
 
       <div class="config-section">
-        <label>Firebase Config JSON:</label>
+        <label>Firebase Config Object:</label>
         <textarea
           id="firebase-config"
-          rows="10"
-          placeholder='Paste your Firebase config here (JSON or JS object), e.g.:
+          rows="11"
+          placeholder='Paste your Firebase config which normally looks like:
 {
-  apiKey: "AIza...",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project",
-  ...
+    apiKey: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    authDomain: "history-xxxxx.firebaseapp.com",
+    databaseURL: "https://history-xxxxx-default-xxxx.firebaseio.com",
+    projectId: "history-xxxxx",
+    storageBucket: "history-xxxxx.firebasestorage.app",
+    messagingSenderId: "xxxxxxxxxxxx",
+    appId: "1:xxxxxxxxxxxx:web:xxxxxxxxxxxxxxxxxxxxxx",
+    measurementId: "G-xxxxxxxxxxx"
 }'
         ></textarea>
       </div>
@@ -314,5 +425,6 @@ service cloud.firestore {
       const unbind = vanillaTabs.bind();
       vanillaTabs.active();
     </script>
+    <script src="https://stopsopa.github.io/alert-webcomponent/alert-box.js"></script>
   </body>
 </html>
