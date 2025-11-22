@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Experiment 5: Auto-Color Script</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        #container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .block {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .color-box {
+            padding: 20px;
+            border: 1px solid rgba(0,0,0,0.1);
+            width: 200px;
+            height: 100px;
+            border-radius: 8px;
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Experiment 5: Auto-Color Script</h1>
+    <p>Technique: <code>MutationObserver</code> via <code>experiment5.js</code></p>
+    <p>The script automatically detects new elements and style changes to apply the complementary text color. No manual function calls are made when adding elements.</p>
+
+    <div class="controls">
+        <button id="addBtn">Add Block</button>
+        <button id="removeBtn">Remove Block</button>
+    </div>
+
+    <div id="container">
+        <!-- Blocks will be added here -->
+    </div>
+
+    <!-- Load the script as a module -->
+    <script type="module">
+        import { autocolors } from './experiment5.js';
+
+        // Initialize the auto-color behavior
+        autocolors('.color-box');
+
+        const container = document.getElementById('container');
+        const addBtn = document.getElementById('addBtn');
+        const removeBtn = document.getElementById('removeBtn');
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        function createBlock() {
+            const color = getRandomColor();
+            const div = document.createElement('div');
+            div.className = 'block';
+            
+            // Inner HTML structure
+            div.innerHTML = `
+                <input type="color" value="${color}">
+                <div class="color-box" style="background-color: ${color}">
+                    Dynamic Content
+                </div>
+            `;
+
+            // Attach event listener for the color picker
+            const input = div.querySelector('input');
+            const box = div.querySelector('.color-box');
+            
+            input.addEventListener('input', (e) => {
+                box.style.backgroundColor = e.target.value;
+                // Note: We do NOT call any update function here. 
+                // The MutationObserver in experiment5.js handles it.
+            });
+
+            container.appendChild(div);
+        }
+
+        addBtn.addEventListener('click', createBlock);
+        
+        removeBtn.addEventListener('click', () => {
+            if (container.lastChild) {
+                container.removeChild(container.lastChild);
+            }
+        });
+
+        // Add a few initial blocks
+        for(let i=0; i<3; i++) createBlock();
+    </script>
+</body>
+</html>
