@@ -8,19 +8,16 @@
     <link rel="icon" type="image/png" href="img/favicon.png" />
     <link rel="preconnect" href="https://rsms.me/" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-    <script
-      type="text/javascript"
-      src="node_modules/vis-timeline/dist/vis-timeline-graph2d.min.cjs"
-    ></script>
+
     <link
       href="node_modules/vis-timeline/styles/vis-timeline-graph2d.min.css"
       rel="stylesheet"
       type="text/css"
     />
     <link rel="stylesheet" href="node_modules/easymde/dist/easymde.min.css" />
-    <script src="node_modules/easymde/dist/easymde.min.js"></script>
 
-    <script src="node_modules/marked/lib/marked.umd.js"></script>
+    <!-- must stay with UMD, there is not ESM version -->
+    <script src="node_modules/easymde/dist/easymde.min.js"></script>
 
     <style type="text/css">
       .g-inter {
@@ -786,6 +783,11 @@
     </div>
 
     <script type="module">
+      import {
+        Timeline,
+        DataSet,
+      } from "./node_modules/vis-timeline/dist/vis-timeline-graph2d.esm.js";
+      import { marked } from "./node_modules/marked/lib/marked.esm.js";
       import { autocolors } from "./color/experiment5.js";
       import {
         formatDateForDisplay,
@@ -1951,7 +1953,7 @@
               return processed;
             });
 
-            items = new vis.DataSet(processedData);
+            items = new DataSet(processedData);
             if (timeline) {
               timeline.setItems(items);
             } else {
@@ -2028,7 +2030,7 @@
 
         // Render event details functions
 
-        timeline = new vis.Timeline(container, items, options);
+        timeline = new Timeline(container, items, options);
         // Add double-click listener to open edit modal
         timeline.on("doubleClick", function (properties) {
           if (properties.item) {
