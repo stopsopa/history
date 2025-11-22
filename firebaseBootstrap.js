@@ -3,6 +3,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
@@ -57,9 +58,9 @@ export function bootstrapFirebase({ containerId }) {
               <li>Add your domain to <strong>Authorized domains</strong> (e.g., <code>localhost</code> or your GitHub Pages URL)</li>
             </ul>
           </li>
-          <li>Enable <strong>Realtime Database</strong>:
+          <li>Enable <strong>Firestore Database</strong>:
             <ul style="margin: 5px 0;">
-              <li>Go to <strong>Build</strong> -&gt; <strong>Realtime Database</strong> in the left menu</li>
+              <li>Go to <strong>Build</strong> -&gt; <strong>Firestore Database</strong> in the left menu</li>
               <li>Click <strong>"Create database"</strong></li>
               <li>Choose <strong>"Start in locked mode"</strong> (for now)</li>
               <li>Select a location and click <strong>Enable</strong></li>
@@ -167,8 +168,8 @@ export function bootstrapFirebase({ containerId }) {
       });
     }
 
-    // Step 1: Initialize Firebase
-    initBtn.addEventListener("click", () => {
+    // Step 1: Initialize Firebase Logic
+    const initializeFirebase = () => {
       errorMsg.textContent = "";
       errorMsg.style.color = "red";
       const configText = configTextarea.value.trim();
@@ -185,8 +186,6 @@ export function bootstrapFirebase({ containerId }) {
           firebaseConfig = JSON.parse(configText);
         } catch (e) {
           // If JSON fails, try evaluating as a JavaScript object
-          // This allows users to paste the raw config object from Firebase console
-          // which often has unquoted keys
           const evalFn = new Function(`return ${configText}`);
           firebaseConfig = evalFn();
         }
@@ -213,6 +212,16 @@ export function bootstrapFirebase({ containerId }) {
         db = getFirestore(app);
         provider = new GoogleAuthProvider();
 
+        // Listen for auth state changes
+        onAuthStateChanged(auth, (user) => {
+          console.log("Auth state changed:", user ? "User logged in" : "No user");
+          if (user) {
+            console.log("✅ Firebase initialized! User restored:", user.displayName);
+            modal.remove();
+            resolve({ auth, provider, app, user, db });
+          }
+        });
+
         // Save config to localStorage
         localStorage.setItem(STORAGE_KEY, configText);
 
@@ -226,7 +235,14 @@ export function bootstrapFirebase({ containerId }) {
         console.error("Firebase initialization error:", err);
         errorMsg.textContent = `Initialization failed: ${err.message}`;
       }
-    });
+    };
+
+    initBtn.addEventListener("click", initializeFirebase);
+
+    // Auto-initialize if config is saved
+    if (savedConfig) {
+      setTimeout(initializeFirebase, 100); // Small delay to ensure UI is ready
+    }
 
     // Step 2: Login with Google
     loginBtn.addEventListener("click", async () => {

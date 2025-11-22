@@ -7,10 +7,15 @@ We have successfully integrated Firebase Firestore into `index.html`, replacing 
 ## Changes Made
 
 1.  **Firebase Bootstrap**: Added a modal to input Firebase config and login with Google.
+    - **Session Persistence**: Automatically restores session on page reload.
+    - **Auto-Init**: Automatically initializes if config is saved.
+    - **JS Config Support**: Accepts raw JS objects from Firebase Console.
 2.  **Data Layer**: Created `lib/firebaseData.js` to handle Firestore CRUD operations.
+    - **Collection Path**: Uses `history-events` (valid root collection).
 3.  **Application Logic**: Replaced all `fetch()` calls in `index.html` with Firestore operations.
+    - **Fallback**: Renders empty timeline if data loading fails (e.g., permission denied).
 4.  **Image Handling**: Removed file upload UI; images are now handled via external URLs only.
-5.  **Dependencies**: Installed `firebase` package and updated imports to use local `node_modules`.
+5.  **Dependencies**: Reverted to CDN imports for browser compatibility.
 
 ## Verification Steps
 
@@ -21,9 +26,11 @@ We have successfully integrated Firebase Firestore into `index.html`, replacing 
 3.  Follow the instructions in the modal to:
     - Create a Firebase project.
     - Enable Google Authentication.
-    - Enable Firestore Database (Start in **Test Mode**).
+    - **CRITICAL**: Click **Build** -> **Firestore Database** (NOT Realtime Database).
+    - Click **Create Database**.
+    - Enable Firestore Database (Start in **Test Mode** or ensure rules allow read/write).
     - Copy your Firebase config object.
-4.  Paste the config into the text area and click "Initialize Firebase".
+4.  Paste the config into the text area. It will auto-initialize.
 5.  Login with your Google account.
 
 ### 2. Verify Data Operations
@@ -32,7 +39,7 @@ We have successfully integrated Firebase Firestore into `index.html`, replacing 
     - Double-click on the timeline to add an event.
     - Fill in title, date, and content.
     - (Optional) Add an image URL (e.g., `https://via.placeholder.com/150`).
-    - Click "Save".
+    - Click "Create Event".
     - Verify the event appears on the timeline.
 2.  **Edit Event**:
     - Double-click the event you just created.
@@ -48,12 +55,12 @@ We have successfully integrated Firebase Firestore into `index.html`, replacing 
     - Refresh the page.
     - Verify the new position is persisted.
 
-### 3. Verify Persistence
+### 3. Verify Persistence & Auto-Login
 
 1.  Refresh the page.
-2.  You should NOT be asked to paste the config again (it's saved in localStorage).
-3.  You might need to click "Login with Google" again (unless we implemented silent auth persistence, but the current flow requires explicit login button click for security/clarity).
-4.  Verify your events are loaded from Firestore.
+2.  You should **NOT** see the modal.
+3.  The app should auto-initialize and log you in.
+4.  Events should load automatically.
 
 ### 4. Verify Image Handling
 
@@ -64,6 +71,6 @@ We have successfully integrated Firebase Firestore into `index.html`, replacing 
 
 ## Troubleshooting
 
-- **Login Error**: Check "Authorized domains" in Firebase Console -> Authentication -> Settings. Add `localhost` or your domain.
-- **Firestore Error**: Ensure Firestore is enabled and rules allow read/write (Test Mode allows all).
+- **Login Error (auth/configuration-not-found)**: Enable Google Sign-In in Firebase Console.
+- **Firestore Error (Permission Denied)**: Check Firestore Rules. Ensure they allow read/write (e.g., `allow read, write: if true;`). **Do not use "Locked Mode"**.
 - **Console Errors**: Open Developer Tools (F12) to see detailed error messages.
