@@ -787,12 +787,28 @@
         Timeline,
         DataSet,
       } from "./node_modules/vis-timeline/dist/vis-timeline-graph2d.esm.js";
+
       import { marked } from "./node_modules/marked/lib/marked.esm.js";
+
       import { autocolors } from "./color/experiment5.js";
+
       import {
         formatDateForDisplay,
         calculateDuration,
       } from "./lib/dateUtils.js";
+
+      import { bootstrapFirebase } from "./firebaseBootstrap.js";
+
+      try {
+        const { auth, provider, app, user } = await bootstrapFirebase({
+          containerId: "firebase-bootstrap-container",
+        });
+
+        console.log("User logged in:", user);
+        // Now you can use `auth`, `app`, Firestore, etc.
+      } catch (err) {
+        console.error("Firebase bootstrap failed:", err);
+      }
 
       // Initialize auto-colors for timeline items
       autocolors("[data-id]");
