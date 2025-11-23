@@ -299,6 +299,10 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
+    if (req.path.startsWith('/img/') || req.path.startsWith('/thumb/')) {
+        next();
+        return;
+    }
     // Disable caching for all requests
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Pragma', 'no-cache');
@@ -308,11 +312,16 @@ app.use((req, res, next) => {
 
 app.use(express.static(web, {
     index: false, // stop automatically serve index.html if present
-    setHeaders: (res) => {
-        // Ensure no-cache headers are set for static files
-        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-        res.set('Pragma', 'no-cache');
-        res.set('Expires', '0');
+    setHeaders: (res, filePath) => {
+        if (filePath.includes('/img/') || filePath.includes('/thumb/')) {
+            res.set('Cache-Control', 'public, max-age=315360000, immutable');
+            res.set('Expires', new Date(Date.now() + 315360000000).toUTCString());
+        } else {
+            // Ensure no-cache headers are set for static files
+            res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+            res.set('Pragma', 'no-cache');
+            res.set('Expires', '0');
+        }
     }
 }), serveIndex(web, {
     icons: true,
