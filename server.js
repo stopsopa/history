@@ -333,7 +333,8 @@ if (process.env.NODE_ENV !== 'test') {
     app.listen(port, host, () => {
         const startTime = (new Date()).toISOString().substring(0, 19).replace('T', ' ')
         log(`\n 🌎  Server is running http://${host}:${port}`);
-        log(` ⏰  Started at: ${startTime}\n`);
+        log(`\n     also http://${host}:${port}/custom.html - for version working with events.json`);
+        log(`\n ⏰  Started at: ${startTime}\n`);
     });
 }
 
