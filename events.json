@@ -37,5 +37,27 @@
     "content": "",
     "start": "1500-11-22",
     "end": "1800-11-22"
+  },
+  {
+    "id": 1763866288101,
+    "title": "World War I (Great War)",
+    "content": "",
+    "start": "1914-07-28",
+    "end": "1918-11-11",
+    "image": "img/1914/07/28-world_war_i__great_war_.jpg",
+    "group": [
+      "wars"
+    ]
+  },
+  {
+    "id": 1763866405932,
+    "title": "World War II",
+    "content": "",
+    "start": "1939-09-01",
+    "end": "1945-09-02",
+    "image": "img/1939/09/01-world_war_ii.jpg",
+    "group": [
+      "wars"
+    ]
   }
 ]
