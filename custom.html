@@ -1723,6 +1723,39 @@
         }
       };
 
+      // Paste from clipboard
+      document.addEventListener('paste', (e) => {
+        // Only handle paste if the modal is open
+        if (modal.style.display !== 'block') return;
+
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let index in items) {
+          const item = items[index];
+          if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const blob = item.getAsFile();
+            
+            // Set the file input
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(blob);
+            imageInput.files = dataTransfer.files;
+            
+            // Update UI
+            fileNameDisplay.textContent = blob.name || "pasted-image.png";
+            
+            // Select "Upload File" radio
+            const uploadRadio = document.querySelector('input[name="imageSource"][value="upload"]');
+            if (uploadRadio) {
+                uploadRadio.checked = true;
+                // Trigger change event to update visibility
+                uploadRadio.dispatchEvent(new Event('change'));
+            }
+            
+            e.preventDefault(); // Prevent default paste behavior
+            return; // Only handle the first image found
+          }
+        }
+      });
+
       // Form Submission
       form.onsubmit = function (e) {
         e.preventDefault();

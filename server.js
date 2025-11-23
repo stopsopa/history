@@ -235,6 +235,25 @@ app.put("/api/events/:id", upload.single('imageFile'), async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 
+
+});
+
+app.post("/api/upload", upload.single('imageFile'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: "No file uploaded" });
+        }
+        
+        const title = req.body.title || 'upload';
+        const start = req.body.start || new Date().toISOString().split('T')[0];
+        
+        const imagePath = await processImage(req.file.buffer, start, title, __dirname);
+        
+        res.json({ success: true, imagePath: imagePath });
+    } catch (error) {
+        console.error("Error uploading image:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // Delete event endpoint
