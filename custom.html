@@ -1037,6 +1037,9 @@
         window.setCustomColor = () => {
           useDefaultColor = false;
         };
+        window.setUseDefaultColor = (val) => {
+          useDefaultColor = val;
+        };
       });
 
       // Color Management Functions
@@ -1419,7 +1422,7 @@
         document.getElementById("eventColorText").value = "#428bad";
         if (window.setCustomColor) {
           // Reset to using default (not custom)
-          window.useDefaultColor = () => true;
+          window.setUseDefaultColor(true);
         }
 
         // Clear any error messages
@@ -1576,9 +1579,9 @@
         // Set the custom color flag based on whether event has a color
         if (window.useDefaultColor) {
           if (rawEvent && rawEvent.color) {
-            window.useDefaultColor = () => false; // Event has custom color
+            window.setUseDefaultColor(false); // Event has custom color
           } else {
-            window.useDefaultColor = () => true; // Event uses default
+            window.setUseDefaultColor(true); // Event uses default
           }
         }
 
