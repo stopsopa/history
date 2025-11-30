@@ -17,7 +17,8 @@
     "content": "",
     "start": "1706-01-17",
     "end": "1790-04-17",
-    "image": "img/1706/01/16-benjamin_franklin.jpg"
+    "image": "img/1706/01/16-benjamin_franklin.jpg",
+    "color": "#b8b8b8"
   },
   {
     "id": 1763741495698,
@@ -30,13 +31,6 @@
       "civilisations"
     ],
     "color": "#daffc2"
-  },
-  {
-    "id": 1763774489866,
-    "title": "xxx",
-    "content": "",
-    "start": "1500-11-22",
-    "end": "1800-11-22"
   },
   {
     "id": 1763866288101,
@@ -59,5 +53,61 @@
     "group": [
       "wars"
     ]
+  },
+  {
+    "id": 1764466287587,
+    "title": "Generation Z",
+    "content": "",
+    "start": "1997-01-01",
+    "end": "2012-12-31",
+    "color": "#ae6242"
+  },
+  {
+    "id": 1764468921208,
+    "title": "Millennials (Generation Y)",
+    "content": "",
+    "start": "1981-01-01",
+    "end": "1996-12-31",
+    "color": "#ae6242"
+  },
+  {
+    "id": 1764469014594,
+    "title": "Generation X",
+    "content": "",
+    "start": "1965-01-01",
+    "end": "1980-12-31",
+    "color": "#ae6242"
+  },
+  {
+    "id": 1764469057588,
+    "title": "Baby Boomers",
+    "content": "",
+    "start": "1946-01-01",
+    "end": "1964-12-31",
+    "color": "#ae6242"
+  },
+  {
+    "id": 1764469103312,
+    "title": "Silent Generation",
+    "content": "",
+    "start": "1928-01-01",
+    "end": "1945-12-31",
+    "color": "#ae6242"
+  },
+  {
+    "id": 1764469149569,
+    "title": "Greatest Generation (or “GI Generation”)",
+    "content": "",
+    "start": "1901-01-01",
+    "end": "1927-12-31",
+    "color": "#ae6242"
+  },
+  {
+    "id": 1764469434107,
+    "title": "Generation Alpha",
+    "content": "",
+    "start": "2013-01-01",
+    "end": "2024-12-31",
+    "color": "#ae6242"
   }
 ]
