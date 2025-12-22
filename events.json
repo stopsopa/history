@@ -109,5 +109,17 @@
     "start": "2013-01-01",
     "end": "2024-12-31",
     "color": "#ae6242"
+  },
+  {
+    "id": 1766411919469,
+    "title": "Maya civilisation",
+    "content": "https://en.wikipedia.org/wiki/Maya_civilization",
+    "start": "-2000-01-01",
+    "end": "1697-01-01",
+    "image": "img/-2000/01/01-maya_civilisation.jpg",
+    "group": [
+      "civilisations"
+    ],
+    "color": "#daffc2"
   }
 ]
