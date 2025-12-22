@@ -121,5 +121,41 @@
       "civilisations"
     ],
     "color": "#daffc2"
+  },
+  {
+    "id": 1766412330268,
+    "title": "Ancient Egypt",
+    "content": "https://en.wikipedia.org/wiki/Ancient_Egypt",
+    "start": "-3100-01-01",
+    "end": "-300-01-01",
+    "image": "img/-3100/01/01-ancient_egypt.jpg",
+    "group": [
+      "civilisations"
+    ],
+    "color": "#daffc2"
+  },
+  {
+    "id": 1766412613277,
+    "title": "Aztecs",
+    "content": "https://en.wikipedia.org/wiki/Aztecs",
+    "start": "1200-01-01",
+    "end": "1521-01-01",
+    "image": "img/1200/01/01-aztecs.jpg",
+    "group": [
+      "civilisations"
+    ],
+    "color": "#daffc2"
+  },
+  {
+    "id": 1766412742038,
+    "title": "Inca Empire",
+    "content": "https://en.wikipedia.org/wiki/Inca_Empire",
+    "start": "1200-01-01",
+    "end": "1572-01-01",
+    "image": "img/1200/01/01-inca_empire.jpg",
+    "group": [
+      "civilisations"
+    ],
+    "color": "#daffc2"
   }
 ]
