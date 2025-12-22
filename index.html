@@ -1298,6 +1298,9 @@
           // For CE dates, use JavaScript Date object for validation
           if (yearNum > 0) {
             const date = new Date(yearNum, monthNum - 1, dayNum);
+            if (yearNum < 100) {
+              date.setFullYear(yearNum);
+            }
 
             // Check if the date is valid (JavaScript Date auto-corrects invalid dates)
             if (
@@ -1859,7 +1862,11 @@
         }
 
         // For CE dates, use standard Date constructor
-        return new Date(year, month, day);
+        const date = new Date(year, month, day);
+        if (year >= 0 && year < 100) {
+          date.setFullYear(year);
+        }
+        return date;
       }
 
       // Render event details functions
