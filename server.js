@@ -71,7 +71,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 const downloadImage = (url) => {
     return new Promise((resolve, reject) => {
         const client = url.startsWith('https') ? https : http;
-        client.get(url, (res) => {
+        const options = {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        };
+        client.get(url, options, (res) => {
             if (res.statusCode !== 200) {
                 reject(new Error(`Failed to download image: ${res.statusCode}`));
                 return;
