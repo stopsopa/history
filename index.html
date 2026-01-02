@@ -2160,6 +2160,12 @@
       // loadEvents();
 
       // --- Custom Selection Logic ---
+      function isMobileDevice() {
+        return (
+          navigator.maxTouchPoints > 0 ||
+          window.matchMedia("(max-width: 1024px)").matches
+        );
+      }
       let selectedEventIds = [];
 
       // Handle click events for selection
@@ -2202,27 +2208,41 @@
           }
         }
 
-        if (!isModifierPressed) {
-          // Case: No modifier -> Select only this one (as #1)
-          selectedEventIds = [targetId];
-        } else {
-          // Case: Modifier pressed
-          if (selectedEventIds.length === 0) {
-            // Nothing selected -> Select as #1
-            selectedEventIds = [targetId];
-          } else if (selectedEventIds.length === 1) {
-            // One selected -> Select as #2 (if different)
-            if (selectedEventIds[0] != targetId) {
-              selectedEventIds.push(targetId);
-            }
+        if (isMobileDevice()) {
+          if (selectedEventIds.length === 1 && selectedEventIds[0] !== targetId) {
+            // Case: One selected -> Select as #2
+            selectedEventIds.push(targetId);
           } else {
-            // Two selected -> Replace #2
-            if (selectedEventIds[0] != targetId) {
-              selectedEventIds[1] = targetId;
+            // Case: 0 or 2 already selected -> Start fresh at slot #1
+            selectedEventIds = [targetId];
+          }
+        } else {
+          // Desktop Logic: Requirement modifier for #2
+          const isModifierPressed =
+            event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
+
+          if (!isModifierPressed) {
+            // Case: No modifier -> Select only this one (as #1)
+            selectedEventIds = [targetId];
+          } else {
+            // Case: Modifier pressed
+            if (selectedEventIds.length === 0) {
+              // Nothing selected -> Select as #1
+              selectedEventIds = [targetId];
+            } else if (selectedEventIds.length === 1) {
+              // One selected -> Select as #2 (if different)
+              if (selectedEventIds[0] != targetId) {
+                selectedEventIds.push(targetId);
+              }
             } else {
-              // Clicked #1 again with modifier? Let's do nothing or maybe deselect?
-              // User requirement: "when user keeps clicking events then only the second one is changing in selection"
-              // So if I click #1, it stays #1.
+              // Two selected -> Replace #2
+              if (selectedEventIds[0] != targetId) {
+                selectedEventIds[1] = targetId;
+              } else {
+                // Clicked #1 again with modifier? Let's do nothing or maybe deselect?
+                // User requirement: "when user keeps clicking events then only the second one is changing in selection"
+                // So if I click #1, it stays #1.
+              }
             }
           }
         }
