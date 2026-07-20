@@ -194,5 +194,14 @@
     "group": [
       "people"
     ]
+  },
+  {
+    "id": 1784547634251,
+    "title": "Byzantium",
+    "content": "https://en.wikipedia.org/wiki/Byzantium",
+    "start": "-657-01-01",
+    "end": "330-01-01",
+    "image": "img/-657/01/01-byzantium.jpg",
+    "color": "#daffc2"
   }
 ]
