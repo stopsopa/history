@@ -183,5 +183,16 @@
     "content": "https://answersingenesis.org/bible-timeline/timeline-for-the-flood/",
     "start": "-4004-01-01",
     "image": "img/-4004/01/01-0_anno_mundi___creation.jpg"
+  },
+  {
+    "id": 1768829912048,
+    "title": "Queen Victoria",
+    "content": "https://en.wikipedia.org/wiki/Queen_Victoria",
+    "start": "1819-05-24",
+    "end": "1901-01-22",
+    "image": "img/1819/05/24-queen_victoria.jpg",
+    "group": [
+      "people"
+    ]
   }
 ]
