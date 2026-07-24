@@ -9,3 +9,7 @@ This project was vibecoded as a simple utility tool with no plans to extend.
 ## Custom 
 
 Based on local server and events.json: https://stopsopa.github.io/history/custom.html
+
+## pdf
+
+https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf

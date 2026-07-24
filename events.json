@@ -203,5 +203,87 @@
     "end": "330-01-01",
     "image": "img/-657/01/01-byzantium.jpg",
     "color": "#daffc2"
+  },
+  {
+    "id": 1784921267210,
+    "title": "Abraham enters Canaan (God's covenant)",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-1875-01-01",
+    "image": "img/-1875/01/01-abraham_enters_canaan__god_s_covenant_.jpg"
+  },
+  {
+    "id": 1784921305021,
+    "title": "Isaac born (25 years after Abraham entered Canaan)",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-1850-01-01"
+  },
+  {
+    "id": 1784921321591,
+    "title": "Jacob born (Isaac age 60)",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-1790-07-24"
+  },
+  {
+    "id": 1784921342177,
+    "title": "Levi born (derived chronology)",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-1704-07-24"
+  },
+  {
+    "id": 1784921358530,
+    "title": "Joseph born",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-1699-07-24"
+  },
+  {
+    "id": 1784921373382,
+    "title": "Jacob and his family enter Egypt",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-1660-01-01",
+    "image": "img/-1660/01/01-jacob_and_his_family_enter_egypt.jpg"
+  },
+  {
+    "id": 1784921402330,
+    "title": "Death of Joseph",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-1589-07-24"
+  },
+  {
+    "id": 1784921424388,
+    "title": "Birth of Moses",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-1525-07-24"
+  },
+  {
+    "id": 1784921439093,
+    "title": "The Exodus",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-1445-07-24"
+  },
+  {
+    "id": 1784921465680,
+    "title": "Entry into Canaan / conquest begins",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-1405-07-24",
+    "image": "img/-1405/07/24-entry_into_canaan___conquest_begins.jpg"
+  },
+  {
+    "id": 1784921482606,
+    "title": "Birth of David",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-1040-07-24"
+  },
+  {
+    "id": 1784921500361,
+    "title": "Fourth year of Solomon; Temple construction begins",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-966-07-24",
+    "image": "img/-966/07/24-fourth_year_of_solomon__temple_construction_begins.jpg"
+  },
+  {
+    "id": 1784921513100,
+    "title": "Death of Solomon",
+    "content": "based on: https://stopsopa.github.io/history/papers/A_Complete_Chronology_of_the_Israelites_in_Egypt.pdf",
+    "start": "-930-07-24"
   }
 ]
