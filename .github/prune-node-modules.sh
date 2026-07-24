@@ -3,13 +3,13 @@
 
 # Call like:
 # /bin/bash .github/prune-node-modules.sh node_modules/vis-timeline/dist node_modules/vis-timeline/styles node_modules/easymde/dist
-# 
+#
 # This script will:
 # 1. Create a temporary directory
 # 2. Move specified directories to temporary location
-# 3. Clean node_modules completely
+# 3. Clean node_modules completely (keeping pnpm store)
 # 4. Restore moved directories
-# 5. Remove temporary directory 
+# 5. Remove temporary directory
 
 set -euo pipefail
 
@@ -53,8 +53,8 @@ fi
 
 # --- 4. Move specified directories to temporary location ---
 for path in "$@"; do
-    if [ ! -d "${path}" ]; then
-        echo "${SCRIPT_NAME} error: directory '${path}' does not exist"
+    if [ ! -e "${path}" ]; then
+        echo "${SCRIPT_NAME} error: path '${path}' does not exist"
         exit 1
     fi
 
@@ -70,13 +70,13 @@ if [ ! -d node_modules ]; then
     exit 1
 fi
 
-echo "Cleaning node_modules completely (including hidden files)"
-find node_modules -mindepth 1 -exec rm -rf {} +
+echo "Cleaning node_modules (keeping pnpm store)"
+find node_modules -mindepth 1 -maxdepth 1 ! -name ".pnpm" -exec rm -rf {} +
 
 # --- 6. Restore moved directories ---
 for path in "$@"; do
     SRC="${TMPDIR}/${path}"
-    if [ -d "${SRC}" ]; then
+    if [ -e "${SRC}" ]; then
         DEST_DIR="$(dirname "${path}")"
         mkdir -p "${DEST_DIR}"
         mv "${SRC}" "${DEST_DIR}/"
