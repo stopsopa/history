@@ -21,9 +21,15 @@ jobs:
       # DEBUG_MODE: "on"
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+
+      - name: Read Node version from .tool-versions
+        id: node-version
+        run: |
+          echo "version=$(awk '/^nodejs / { sub(/^v/, "", $2); print $2 }' .tool-versions)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: 24.11.0
+          node-version: ${{ steps.node-version.outputs.version }}
           cache: "yarn"
 
       - uses: actions/cache/restore@v4.2.2 # https://github.com/actions/cache/blob/main/examples.md#node---yarn
