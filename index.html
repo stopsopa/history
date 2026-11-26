@@ -15,6 +15,7 @@
       type="text/css"
     />
     <link rel="stylesheet" href="node_modules/easymde/dist/easymde.min.css" />
+    <link rel="stylesheet" href="lib/gcp-css.css" />
 
     <!-- must stay with UMD, there is not ESM version -->
     <script src="node_modules/easymde/dist/easymde.min.js"></script>
@@ -53,7 +54,7 @@
         background-color: rgba(0, 0, 0, 0.4);
       }
       .modal-content {
-        background-color: #fefefe;
+        background-color: #fff; /* = --gcp-css-bg, floating labels cover the field border with it */
         margin: 20px auto;
         padding: 30px;
         border: 1px solid #888;
@@ -77,22 +78,49 @@
         text-decoration: none;
         cursor: pointer;
       }
-      .form-group {
-        margin-bottom: 15px;
+      /* layout helpers around gcp-css components (lib/gcp-css.css) - look of fields comes from there */
+      .toolbar {
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
       }
-      .form-group label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
+      .group-filters {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
       }
-      .form-group input[type="text"],
-      .form-group input[type="date"],
-      .form-group input[type="url"] {
-        width: 100%;
-        padding: 8px;
-        box-sizing: border-box;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+      .modal-title {
+        margin-top: 0;
+      }
+      .field-group {
+        margin-bottom: 19px;
+      }
+      /* fields side by side: the row keeps the gap below, not each field */
+      .field-row {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        --gcp-css-field-gap: 0px;
+      }
+      .group-checkboxes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+        margin-bottom: 14px;
+        --gcp-css-field-gap: 0px;
+      }
+      .form-error {
+        color: var(--gcp-css-error);
+        font-size: var(--gcp-css-small-font-size);
+        padding-top: 6px;
+      }
+      /* red variant of the primary gcp-css button */
+      .danger {
+        --gcp-css-primary: var(--gcp-css-error);
+        --gcp-css-primary-hover: #b3261e;
       }
       .drop-zone {
         border: 2px dashed #ccc;
@@ -110,9 +138,6 @@
       .hidden {
         display: none;
       }
-      body .vis-tooltip {
-        display: none;
-      }
       .vis-item {
         background-color: #428bad;
         cursor: pointer;
@@ -121,26 +146,9 @@
       .vis-item:hover {
         box-shadow: 0 0 7px rgb(146, 146, 146);
       }
-      .vis-item-ovegrflow {
-        color: white;
-      }
-      .group-filter-btn {
-        padding: 6px 12px;
-        background: #e0e0e0;
-        color: #333;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 13px;
-        transition: all 0.2s;
-      }
-      .group-filter-btn:hover {
-        background: #d0d0d0;
-      }
-      .group-filter-btn.active {
-        background: #2196f3;
-        color: white;
-        border-color: #1976d2;
+      /* group filter: gcp-css button, "secondary" (outlined here) when off, primary when on */
+      .toolbar .group-filter-btn.secondary {
+        border-color: var(--gcp-css-border);
       }
       .group-tag {
         display: inline-flex;
@@ -194,6 +202,8 @@
       .vis-item.selected-item-2 {
         border-color: #0000ff !important;
         background-color: #e6e6ff !important;
+        /* fixed dark text: the per-item text colour is tuned for the item's own background */
+        color: #1a1a1a !important;
         box-shadow: 0 0 10px rgba(0, 0, 255, 0.5);
         z-index: 2;
       }
@@ -226,6 +236,15 @@
       .vis-item .vis-item-overflow:hover {
         overflow: visible;
       }
+      /* widen a range item on hover when its title does not fit */
+      .vis-item.vis-range:hover {
+        min-width: max-content;
+        z-index: 10;
+      }
+      .zoom-hint {
+        font-size: 12px;
+        color: #777;
+      }
     </style>
     <link rel="stylesheet" href="lib/vanilla-tabs.css" />
   </head>
@@ -233,27 +252,13 @@
     <!-- Modifier Key Indicator Dot -->
     <div id="modifierIndicator" title="Shift/Ctrl/Alt indicator"></div>
 
-    <div
-      style="
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        flex-wrap: wrap;
-      "
-    >
-      <button id="add-event-btn" style="padding: 5px 10px; cursor: pointer">
-        Add New Event
-      </button>
-      <button id="fit-timeline-btn" style="padding: 5px 10px; cursor: pointer; margin-left: 5px;">
-        Fit All
-      </button>
+    <div class="gcp-css toolbar">
+      <button id="add-event-btn">Add New Event</button>
+      <button id="fit-timeline-btn" class="secondary">Fit All</button>
       <a href="https://visjs.github.io/vis-timeline/examples/timeline/">Docs</a>
       <a href="https://github.com/stopsopa/history">Github</a>
-      <div
-        id="groupFilters"
-        style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center"
-      ></div>
+      <span class="zoom-hint">Zoom: Ctrl + scroll or pinch</span>
+      <div id="groupFilters" class="group-filters"></div>
     </div>
     <div id="visualization"></div>
     <div id="compare"></div>
@@ -294,33 +299,9 @@
             style="color: #888; font-size: 13px; font-style: italic"
           ></div>
         </div>
-        <div style="display: flex; gap: 8px">
-          <button
-            id="detailEditBtn"
-            style="
-              padding: 6px 12px;
-              background: #4caf50;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-            "
-          >
-            Edit
-          </button>
-          <button
-            id="detailDeleteBtn"
-            style="
-              padding: 6px 12px;
-              background: #f44336;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-            "
-          >
-            Delete
-          </button>
+        <div class="gcp-css" style="display: flex; gap: 8px">
+          <button id="detailEditBtn">Edit</button>
+          <button id="detailDeleteBtn" class="danger">Delete</button>
         </div>
       </div>
       <h3 id="detailTitle"></h3>
@@ -330,60 +311,38 @@
 
     <!-- Add Event Modal -->
     <div id="eventModal" class="modal">
-      <div class="modal-content">
+      <div class="modal-content gcp-css">
         <span class="close">&times;</span>
-        <h2>Add New Event</h2>
+        <!-- no-gcp-css: modal title keeps the regular h2 look, gcp-css h2 is a small section heading -->
+        <h2 class="no-gcp-css modal-title">Add New Event</h2>
         <form id="addEventForm" autocomplete="off">
-          <div class="form-group">
-            <label for="title">Title:</label>
-            <input type="text" id="title" name="title" required />
+          <div class="input-wrapper">
+            <input type="text" id="title" name="title" placeholder=" " required />
+            <label for="title">Title *</label>
+            <div class="error" id="title-error">Title is required</div>
           </div>
 
-          <div class="form-group">
-            <label for="content">Content (Markdown):</label>
+          <h2>Content (Markdown)</h2>
+          <!-- no-gcp-css: EasyMDE builds its own toolbar buttons here -->
+          <div class="no-gcp-css field-group">
             <textarea id="content" name="content"></textarea>
           </div>
 
-          <div class="form-group">
-            <label style="font-weight: bold; margin-bottom: 8px; display: block"
-              >Groups:</label
-            >
-            <div
-              id="existingGroupsContainer"
-              style="
-                margin-bottom: 10px;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-              "
-            >
+          <h2>Groups</h2>
+          <div class="field-group">
+            <div id="existingGroupsContainer" class="group-checkboxes">
               <!-- Existing groups will be populated here as checkboxes -->
             </div>
-            <div style="display: flex; gap: 8px; align-items: center">
-              <input
-                type="text"
-                id="newGroupInput"
-                placeholder="Create new group (e.g., Science, History)"
-                style="
-                  flex: 1;
-                  padding: 8px;
-                  border: 1px solid #ccc;
-                  border-radius: 4px;
-                "
-              />
-              <button
-                type="button"
-                id="addGroupBtn"
-                style="
-                  padding: 8px 12px;
-                  background: #2196f3;
-                  color: white;
-                  border: none;
-                  border-radius: 4px;
-                  cursor: pointer;
-                  white-space: nowrap;
-                "
-              >
+            <div class="field-row" style="align-items: center">
+              <div class="input-wrapper" style="flex: 1">
+                <input
+                  type="text"
+                  id="newGroupInput"
+                  placeholder="e.g. Science, History"
+                />
+                <label for="newGroupInput">New group</label>
+              </div>
+              <button type="button" id="addGroupBtn" class="secondary">
                 Add Group
               </button>
             </div>
@@ -391,9 +350,11 @@
               id="selectedGroupsDisplay"
               style="margin-top: 10px; display: none"
             >
-              <small style="color: #666">Selected groups:</small>
+              <div class="helper-text">Selected groups:</div>
+              <!-- no-gcp-css: the "×" buttons in the tags have their own look -->
               <div
                 id="selectedGroupsList"
+                class="no-gcp-css"
                 style="
                   display: flex;
                   flex-wrap: wrap;
@@ -406,61 +367,33 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label style="font-weight: bold; margin-bottom: 8px; display: block"
-              >Event Color (optional):</label
-            >
-            <div
-              style="
-                display: flex;
-                gap: 8px;
-                align-items: center;
-                flex-wrap: wrap;
-              "
-            >
+          <h2>Event colour (optional)</h2>
+          <div class="field-group">
+            <div class="field-row" style="align-items: center; flex-wrap: wrap">
               <input
                 type="color"
                 id="eventColor"
                 value="#428bad"
                 style="
                   width: 50px;
-                  height: 35px;
+                  height: 36px;
                   border: 1px solid #ccc;
                   border-radius: 4px;
                   cursor: pointer;
                 "
               />
-              <input
-                type="text"
-                id="eventColorText"
-                value="#428bad"
-                placeholder="#428bad"
-                pattern="^#[0-9A-Fa-f]{6}$"
-                style="
-                  width: 90px;
-                  padding: 6px 8px;
-                  border: 1px solid #ccc;
-                  border-radius: 4px;
-                  font-family: monospace;
-                "
-              />
-              <button
-                type="button"
-                id="clearColorBtn"
-                style="
-                  padding: 6px 12px;
-                  background: #2196f3;
-                  color: white;
-                  border: none;
-                  border-radius: 4px;
-                  cursor: pointer;
-                  font-size: 13px;
-                  font-weight: 500;
-                  transition: background 0.2s;
-                "
-                onmouseover="this.style.background='#1976D2'"
-                onmouseout="this.style.background='#2196F3'"
-              >
+              <div class="input-wrapper" style="width: 130px">
+                <input
+                  type="text"
+                  id="eventColorText"
+                  value="#428bad"
+                  placeholder="#428bad"
+                  pattern="^#[0-9A-Fa-f]{6}$"
+                  style="font-family: monospace"
+                />
+                <label for="eventColorText">Hex</label>
+              </div>
+              <button type="button" id="clearColorBtn" class="secondary">
                 Use Default
               </button>
               <div
@@ -477,173 +410,104 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="isRange" name="isRange" />
-              Event has duration (Start & End)
-            </label>
+          <div class="checkbox-wrapper">
+            <input type="checkbox" id="isRange" name="isRange" />
+            <label for="isRange">Event has duration (start &amp; end)</label>
           </div>
 
-          <div class="form-group">
-            <label>Start Date:</label>
-            <div style="display: flex; gap: 8px">
-              <input
-                type="number"
-                id="startYearCustom"
-                placeholder="Year (e.g., 1985 or -105)"
-                required
-                style="
-                  flex: 2;
-                  padding: 8px;
-                  font-size: 14px;
-                  border: 1px solid #ccc;
-                  border-radius: 4px;
-                "
-              />
-              <select
-                id="startMonth"
-                name="startMonth"
-                required
-                style="
-                  flex: 1;
-                  padding: 8px;
-                  font-size: 14px;
-                  border: 1px solid #ccc;
-                  border-radius: 4px;
-                "
-              >
-                <option value="">-- Month --</option>
-                <option value="01">January</option>
-                <option value="02">February</option>
-                <option value="03">March</option>
-                <option value="04">April</option>
-                <option value="05">May</option>
-                <option value="06">June</option>
-                <option value="07">July</option>
-                <option value="08">August</option>
-                <option value="09">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
-              </select>
-              <select
-                id="startDay"
-                name="startDay"
-                required
-                style="
-                  flex: 1;
-                  padding: 8px;
-                  font-size: 14px;
-                  border: 1px solid #ccc;
-                  border-radius: 4px;
-                "
-              >
-                <option value="">-- Day --</option>
-              </select>
+          <div class="field-group">
+            <div class="field-row">
+              <div class="input-wrapper" style="flex: 2">
+                <input
+                  type="number"
+                  id="startYearCustom"
+                  placeholder="e.g. 1985, or -105 for 105 BC" required
+                />
+                <label for="startYearCustom">Start year *</label>
+              </div>
+              <div class="input-wrapper" style="flex: 1">
+                <select id="startMonth" name="startMonth" required>
+                  <option value="" selected></option>
+                  <option value="01">January</option>
+                  <option value="02">February</option>
+                  <option value="03">March</option>
+                  <option value="04">April</option>
+                  <option value="05">May</option>
+                  <option value="06">June</option>
+                  <option value="07">July</option>
+                  <option value="08">August</option>
+                  <option value="09">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+                <label for="startMonth">Month *</label>
+              </div>
+              <div class="input-wrapper" style="flex: 1">
+                <select id="startDay" name="startDay" required>
+                  <option value="" selected></option>
+                </select>
+                <label for="startDay">Day *</label>
+              </div>
             </div>
-            <div
-              id="startDateError"
-              style="
-                color: red;
-                font-size: 12px;
-                margin-top: 4px;
-                display: none;
-              "
-            ></div>
+            <div id="startDateError" class="form-error" style="display: none"></div>
           </div>
 
-          <div class="form-group hidden" id="endGroup">
-            <label>End Date:</label>
-            <div style="display: flex; gap: 8px">
-              <input
-                type="number"
-                id="endYearCustom"
-                placeholder="Year (e.g., 1985 or -105)"
-                style="
-                  flex: 2;
-                  padding: 8px;
-                  font-size: 14px;
-                  border: 1px solid #ccc;
-                  border-radius: 4px;
-                "
-              />
-              <select
-                id="endMonth"
-                name="endMonth"
-                style="
-                  flex: 1;
-                  padding: 8px;
-                  font-size: 14px;
-                  border: 1px solid #ccc;
-                  border-radius: 4px;
-                "
-              >
-                <option value="">-- Month --</option>
-                <option value="01">January</option>
-                <option value="02">February</option>
-                <option value="03">March</option>
-                <option value="04">April</option>
-                <option value="05">May</option>
-                <option value="06">June</option>
-                <option value="07">July</option>
-                <option value="08">August</option>
-                <option value="09">September</option>
-                <option value="10">October</option>
-                <option value="11">November</option>
-                <option value="12">December</option>
-              </select>
-              <select
-                id="endDay"
-                name="endDay"
-                style="
-                  flex: 1;
-                  padding: 8px;
-                  font-size: 14px;
-                  border: 1px solid #ccc;
-                  border-radius: 4px;
-                "
-              >
-                <option value="">-- Day --</option>
-              </select>
+          <div class="field-group hidden" id="endGroup">
+            <div class="field-row">
+              <div class="input-wrapper" style="flex: 2">
+                <input
+                  type="number"
+                  id="endYearCustom"
+                  placeholder="e.g. 1985, or -105 for 105 BC"
+                />
+                <label for="endYearCustom">End year</label>
+              </div>
+              <div class="input-wrapper" style="flex: 1">
+                <select id="endMonth" name="endMonth">
+                  <option value="" selected></option>
+                  <option value="01">January</option>
+                  <option value="02">February</option>
+                  <option value="03">March</option>
+                  <option value="04">April</option>
+                  <option value="05">May</option>
+                  <option value="06">June</option>
+                  <option value="07">July</option>
+                  <option value="08">August</option>
+                  <option value="09">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+                <label for="endMonth">Month</label>
+              </div>
+              <div class="input-wrapper" style="flex: 1">
+                <select id="endDay" name="endDay">
+                  <option value="" selected></option>
+                </select>
+                <label for="endDay">Day</label>
+              </div>
             </div>
-            <div
-              id="endDateError"
-              style="
-                color: red;
-                font-size: 12px;
-                margin-top: 4px;
-                display: none;
-              "
-            ></div>
+            <div id="endDateError" class="form-error" style="display: none"></div>
           </div>
 
-          <div class="form-group">
+          <h2>Image</h2>
+          <div class="field-group">
             <div style="display: flex; gap: 20px; align-items: flex-start">
               <!-- Left side: Radio buttons -->
-              <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  gap: 8px;
-                  min-width: 150px;
-                "
-              >
-                <label style="font-weight: bold; margin-bottom: 4px"
-                  >Image:</label
-                >
-                <label
-                  ><input
-                    type="radio"
-                    name="imageSource"
-                    value="none"
-                    checked
-                  />
-                  No Image</label
-                >
-                <label
-                  ><input type="radio" name="imageSource" value="url" /> Image
-                  URL</label
-                >
+              <div class="radio-wrapper" style="min-width: 180px">
+                <input
+                  type="radio"
+                  id="imageSourceNone"
+                  name="imageSource"
+                  value="none"
+                  checked
+                />
+                <label for="imageSourceNone">No image</label>
+
+
+                <input type="radio" id="imageSourceUrl" name="imageSource" value="url" />
+                <label for="imageSourceUrl">Image URL</label>
               </div>
 
               <!-- Right side: Inputs and Preview -->
@@ -653,9 +517,7 @@
                   id="currentImagePreview"
                   style="display: none; margin-bottom: 10px"
                 >
-                  <p style="font-size: 0.9em; color: #666; margin-top: 0">
-                    Current image:
-                  </p>
+                  <p>Current image:</p>
                   <img
                     id="currentImageThumb"
                     src=""
@@ -670,49 +532,39 @@
 
                 <!-- URL Input -->
                 <div class="hidden" id="urlGroup">
-                  <input
-                    type="url"
-                    id="imageUrl"
-                    name="imageUrl"
-                    placeholder="https://example.com/image.jpg"
-                    style="width: 100%; box-sizing: border-box"
-                  />
+                  <div class="input-wrapper">
+                    <input
+                      type="url"
+                      id="imageUrl"
+                      name="imageUrl"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                    <label for="imageUrl">Image URL</label>
+                    <div class="error" id="imageUrl-error">Enter a valid URL</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div
-            id="errorMessage"
-            style="color: red; margin-bottom: 15px; display: none"
-          ></div>
+          <div id="errorMessage" class="form-error" style="margin-bottom: 15px; display: none"></div>
 
-          <button
-            type="submit"
-            style="
-              padding: 8px 16px;
-              background-color: #4caf50;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-            "
-          >
-            Create Event
-          </button>
+          <button type="submit">Create Event</button>
         </form>
       </div>
     </div>
 
     <!-- Delete Confirmation Modal -->
     <div id="deleteModal" class="modal">
-      <div class="modal-content" style="max-width: 600px">
+      <div class="modal-content gcp-css" style="max-width: 600px">
         <span class="close" id="deleteCloseBtn">&times;</span>
-        <h2>Confirm Delete</h2>
+        <h2 class="no-gcp-css modal-title">Confirm Delete</h2>
         <p>Are you sure you want to delete this event?</p>
 
+        <!-- no-gcp-css: rendered event content (markdown) keeps regular text styles -->
         <div
           id="deleteEventDetails"
+          class="no-gcp-css"
           style="
             margin: 20px 0;
             padding: 15px;
@@ -733,32 +585,8 @@
         </div>
 
         <div style="display: flex; gap: 10px; justify-content: flex-end">
-          <button
-            id="cancelDeleteBtn"
-            style="
-              padding: 8px 16px;
-              background-color: #ccc;
-              color: black;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-            "
-          >
-            Cancel
-          </button>
-          <button
-            id="confirmDeleteBtn"
-            style="
-              padding: 8px 16px;
-              background-color: #f44336;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-            "
-          >
-            Remove
-          </button>
+          <button id="cancelDeleteBtn" class="secondary">Cancel</button>
+          <button id="confirmDeleteBtn" class="danger">Remove</button>
         </div>
       </div>
     </div>
@@ -772,15 +600,19 @@
       import {
         Timeline,
         DataSet,
+        DataView,
       } from "./node_modules/vis-timeline/dist/vis-timeline-graph2d.esm.js";
 
       import { marked } from "./node_modules/marked/lib/marked.esm.js";
+      import DOMPurify from "./node_modules/dompurify/dist/purify.es.mjs";
 
-      import { autocolors } from "./color/experiment5.js";
+      import { getComplementaryColor } from "./color/experiment5.js";
 
       import {
         formatDateForDisplay,
         calculateDuration,
+        toAstronomicalYear,
+        toHistoricalYear,
       } from "./lib/dateUtils.js";
 
       import { bootstrapFirebase } from "./firebaseBootstrap.js";
@@ -794,65 +626,6 @@
       } from "./lib/firebaseData.js";
 
 
-
-      // Initialize auto-colors for timeline items
-      autocolors("[data-id]");
-
-      {
-        let globalId;
-        // Width preservation on hover: measure, then inject dynamic style rule
-        const hoverStyleElement = document.createElement("style");
-        document.head.appendChild(hoverStyleElement);
-
-        document.body.addEventListener(
-          "mouseenter",
-          (e) => {
-            if (e.target.hasAttribute("data-id")) {
-              const currentId = (globalId = e.target.getAttribute("data-id"));
-              const currentWidth = e.target.offsetWidth;
-
-              // Update style content
-              console.log(
-                (hoverStyleElement.textContent = `[data-id="${currentId}"] { width: auto !important; }`)
-              );
-
-              setTimeout(() => {
-                if (globalId !== currentId) return;
-
-                const autoWidth = e.target.offsetWidth;
-
-                console.log(
-                  "currentWidth",
-                  currentWidth,
-                  "autoWidth",
-                  autoWidth
-                );
-
-                hoverStyleElement.textContent = "";
-
-                setTimeout(() => {
-                  if (globalId !== currentId) return;
-
-                  if (autoWidth > currentWidth) {
-                    hoverStyleElement.textContent = `[data-id="${currentId}"] { width: ${autoWidth}px !important; }`;
-                  }
-                }, 50);
-              }, 50);
-            }
-          },
-          true
-        );
-
-        document.body.addEventListener(
-          "mouseleave",
-          (e) => {
-            if (e.target.hasAttribute("data-id")) {
-              hoverStyleElement.textContent = "";
-            }
-          },
-          true
-        );
-      }
 
       const visualizationContainer = document.getElementById("visualization");
       const addEventBtn = document.getElementById("add-event-btn");
@@ -870,7 +643,6 @@
       const fileNameDisplay = document.getElementById("fileName");
 
       let timeline;
-      var timelineItems;
       let easyMDE;
       // Global Firebase variables
       let firebaseAuth;
@@ -880,6 +652,36 @@
       let allEvents = []; // Store all events for filtering
       let selectedGroups = new Set(); // Track selected groups in the form
       let activeFilters = new Set(); // Track active filter buttons
+
+      // Marker used by the group filters for events without any group
+      const NO_GROUP = "__NO_GROUP__";
+
+      // Ids of selected events: [0] is selection #1, [1] is selection #2 (the pair is compared)
+      let selectedEventIds = [];
+      // Id of the event currently shown in the details panel
+      let detailEventId = null;
+
+      // All events stay in `timelineItems` permanently. The timeline renders `visibleItems`,
+      // a filtered view of it, so toggling group filters never removes or recreates items.
+      const timelineItems = new DataSet();
+      const visibleItems = new DataView(timelineItems, { filter: matchesActiveFilters });
+
+      function matchesActiveFilters(item) {
+        if (activeFilters.size === 0) return true;
+
+        const groups = Array.isArray(item.group) ? item.group : [];
+        if (groups.length === 0) return activeFilters.has(NO_GROUP);
+
+        return groups.some((g) => activeFilters.has(g));
+      }
+
+      function escapeHtml(text) {
+        return String(text ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;");
+      }
 
       // Modifier Key Indicator
       const modifierIndicator = document.getElementById("modifierIndicator");
@@ -927,19 +729,18 @@
 
         if (uniqueGroups.length === 0) {
           container.innerHTML =
-            '<small style="color: #999;">No groups yet. Create one below.</small>';
+            '<div class="helper-text">No groups yet. Create one below.</div>';
           return;
         }
 
-        uniqueGroups.forEach((group) => {
-          const label = document.createElement("label");
-          label.style.display = "flex";
-          label.style.alignItems = "center";
-          label.style.gap = "4px";
-          label.style.cursor = "pointer";
+        // gcp-css markup: flat .checkbox-wrapper with <input> directly followed by its <label>
+        uniqueGroups.forEach((group, index) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "checkbox-wrapper";
 
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
+          checkbox.id = `group-checkbox-${index}`;
           checkbox.value = group;
           checkbox.checked = selectedGroups.has(group);
           checkbox.addEventListener("change", (e) => {
@@ -951,9 +752,13 @@
             updateSelectedGroupsDisplay();
           });
 
-          label.appendChild(checkbox);
-          label.appendChild(document.createTextNode(group));
-          container.appendChild(label);
+          const label = document.createElement("label");
+          label.htmlFor = checkbox.id;
+          label.textContent = group;
+
+          wrapper.appendChild(checkbox);
+          wrapper.appendChild(label);
+          container.appendChild(wrapper);
         });
       }
 
@@ -973,8 +778,8 @@
           const tag = document.createElement("div");
           tag.className = "group-tag";
           tag.innerHTML = `
-            <span>${group}</span>
-            <button type="button" data-group="${group}">×</button>
+            <span>${escapeHtml(group)}</span>
+            <button type="button" data-group="${escapeHtml(group)}">×</button>
           `;
           tag.querySelector("button").addEventListener("click", () => {
             selectedGroups.delete(group);
@@ -1132,9 +937,11 @@
           const noGroupBtn = document.createElement("button");
           noGroupBtn.className = "group-filter-btn";
           noGroupBtn.textContent = "No Group";
-          noGroupBtn.dataset.group = "__NO_GROUP__";
+          noGroupBtn.dataset.group = NO_GROUP;
+          noGroupBtn.classList.toggle("active", activeFilters.has(NO_GROUP));
+          noGroupBtn.classList.toggle("secondary", !activeFilters.has(NO_GROUP));
           noGroupBtn.addEventListener("click", () =>
-            toggleFilter("__NO_GROUP__")
+            toggleFilter(NO_GROUP)
           );
           container.appendChild(noGroupBtn);
         }
@@ -1145,6 +952,8 @@
           btn.className = "group-filter-btn";
           btn.textContent = group;
           btn.dataset.group = group;
+          btn.classList.toggle("active", activeFilters.has(group));
+          btn.classList.toggle("secondary", !activeFilters.has(group));
           btn.addEventListener("click", () => toggleFilter(group));
           container.appendChild(btn);
         });
@@ -1159,78 +968,17 @@
 
         // Update button states
         document.querySelectorAll(".group-filter-btn").forEach((btn) => {
-          if (activeFilters.has(btn.dataset.group)) {
-            btn.classList.add("active");
-          } else {
-            btn.classList.remove("active");
-          }
+          const isActive = activeFilters.has(btn.dataset.group);
+          btn.classList.toggle("active", isActive);
+          btn.classList.toggle("secondary", !isActive);
         });
 
         applyFilters();
       }
 
       function applyFilters() {
-        if (!timeline || !timelineItems) return;
-
-        // If no filters active, show all events
-        if (activeFilters.size === 0) {
-          const allItems = allEvents.map((event) => {
-            const processed = { ...event };
-            if (event.start) {
-              processed.start = parseDateString(event.start);
-            }
-            if (event.end) {
-              processed.end = parseDateString(event.end);
-            } else {
-              processed.type = "point";
-            }
-            // Apply color styling if color is specified
-            if (event.color && /^#[0-9A-Fa-f]{6}$/i.test(event.color)) {
-              processed.style = `background-color: ${event.color};`;
-            }
-            return processed;
-          });
-          timelineItems.clear();
-          timelineItems.add(allItems);
-          return;
-        }
-
-        // Filter events based on active filters
-        const filteredEvents = allEvents.filter((event) => {
-          // Check if "No Group" filter is active
-          if (activeFilters.has("__NO_GROUP__")) {
-            if (!event.group || event.group.length === 0) {
-              return true;
-            }
-          }
-
-          // Check if event has any of the active group filters
-          if (event.group && Array.isArray(event.group)) {
-            return event.group.some((g) => activeFilters.has(g));
-          }
-
-          return false;
-        });
-
-        const processedFiltered = filteredEvents.map((event) => {
-          const processed = { ...event };
-          if (event.start) {
-            processed.start = parseDateString(event.start);
-          }
-          if (event.end) {
-            processed.end = parseDateString(event.end);
-          } else {
-            processed.type = "point";
-          }
-          // Apply color styling if color is specified
-          if (event.color && /^#[0-9A-Fa-f]{6}$/i.test(event.color)) {
-            processed.style = `background-color: ${event.color};`;
-          }
-          return processed;
-        });
-
-        timelineItems.clear();
-        timelineItems.add(processedFiltered);
+        // re-run matchesActiveFilters() for every item
+        visibleItems.refresh();
       }
 
       // Initialize EasyMDE Markdown Editor
@@ -1265,7 +1013,8 @@
 
       // Populate day dropdowns (1-31)
       function populateDays(selectElement) {
-        selectElement.innerHTML = '<option value="">-- Day --</option>';
+        // empty first option: gcp-css shows the label inside the field while it is selected
+        selectElement.innerHTML = '<option value=""></option>';
         for (let i = 1; i <= 31; i++) {
           const option = document.createElement("option");
           option.value = String(i).padStart(2, "0");
@@ -1290,47 +1039,31 @@
 
         // Try to create a date object
         try {
-          // Handle BCE dates (negative years)
-          const yearNum = parseInt(year);
-          const monthNum = parseInt(month);
-          const dayNum = parseInt(day);
+          const yearNum = parseInt(year, 10);
+          const monthNum = parseInt(month, 10);
+          const dayNum = parseInt(day, 10);
 
-          // For CE dates, use JavaScript Date object for validation
-          if (yearNum > 0) {
-            const date = new Date(yearNum, monthNum - 1, dayNum);
-            if (yearNum < 100) {
-              date.setFullYear(yearNum);
-            }
+          if (yearNum === 0) {
+            errorDiv.textContent =
+              "Year 0 does not exist: 1 BC (-1) is followed directly by 1 AD (1)";
+            errorDiv.style.display = "block";
+            return false;
+          }
 
-            // Check if the date is valid (JavaScript Date auto-corrects invalid dates)
-            if (
-              date.getFullYear() !== yearNum ||
-              date.getMonth() !== monthNum - 1 ||
-              date.getDate() !== dayNum
-            ) {
-              errorDiv.textContent = `Invalid date: ${month} does not have ${day} days in year ${year}`;
-              errorDiv.style.display = "block";
-              return false;
-            }
-          } else {
-            // For BCE dates, do basic validation
-            const daysInMonth = [
-              31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
-            ];
+          // setFullYear() takes the year literally (new Date(79, ...) would mean 1979)
+          // and JavaScript auto-corrects impossible dates, which is how they are detected here
+          const astronomicalYear = toAstronomicalYear(yearNum);
+          const date = new Date(0);
+          date.setFullYear(astronomicalYear, monthNum - 1, dayNum);
 
-            // Check for leap year (works for BCE too)
-            const absYear = Math.abs(yearNum);
-            const isLeap =
-              (absYear % 4 === 0 && absYear % 100 !== 0) || absYear % 400 === 0;
-            if (isLeap && monthNum === 2) {
-              daysInMonth[1] = 29;
-            }
-
-            if (dayNum > daysInMonth[monthNum - 1]) {
-              errorDiv.textContent = `Invalid date: Month ${month} does not have ${day} days`;
-              errorDiv.style.display = "block";
-              return false;
-            }
+          if (
+            date.getFullYear() !== astronomicalYear ||
+            date.getMonth() !== monthNum - 1 ||
+            date.getDate() !== dayNum
+          ) {
+            errorDiv.textContent = `Invalid date: month ${month} does not have ${day} days in year ${year}`;
+            errorDiv.style.display = "block";
+            return false;
           }
 
           errorDiv.style.display = "none";
@@ -1526,25 +1259,14 @@
       confirmDeleteBtn.onclick = async function () {
         if (!currentDeleteId) return;
 
-        // If called from vis-timeline native button, use the callback
-        if (window.pendingDeleteCallback) {
-          window.pendingDeleteCallback(window.pendingDeleteItem);
-          window.pendingDeleteCallback = null;
-          window.pendingDeleteItem = null;
+        try {
+          await deleteEventFromFirestore(firebaseDb, currentDeleteId);
           deleteModal.style.display = "none";
           currentDeleteId = null;
-          saveEvents();
-        } else {
-          // If called from custom button
-          try {
-            await deleteEventFromFirestore(firebaseDb, currentDeleteId);
-            deleteModal.style.display = "none";
-            currentDeleteId = null;
-            loadEvents();
-          } catch (error) {
-            console.error("Error deleting event:", error);
-            alert("Failed to delete event: " + error.message);
-          }
+          loadEvents();
+        } catch (error) {
+          console.error("Error deleting event:", error);
+          alert("Failed to delete event: " + error.message);
         }
       };
 
@@ -1561,6 +1283,11 @@
         document.querySelector("#eventModal h2").textContent = "Edit Event";
         document.querySelector('button[type="submit"]').textContent =
           "Update Event";
+
+        // errors left by a previous use of the form do not belong to this event
+        document.getElementById("errorMessage").style.display = "none";
+        document.getElementById("startDateError").style.display = "none";
+        document.getElementById("endDateError").style.display = "none";
 
         // Populate title
         document.getElementById("title").value = event.title || "";
@@ -1800,6 +1527,8 @@
         submitBtn.disabled = true;
         submitBtn.textContent = "Saving...";
 
+        const isNewEvent = !currentEditId;
+
         try {
           console.log("Saving event to Firestore...", eventData);
           if (currentEditId) {
@@ -1817,6 +1546,9 @@
           closeModal();
           console.log("Reloading events...");
           await loadEvents(); // Reload to refresh timeline
+          if (isNewEvent) {
+            focusEvent(eventData.id); // bring the new event into view
+          }
         } catch (error) {
           console.error("Error saving event:", error);
           errorDiv.style.display = "block";
@@ -1843,35 +1575,114 @@
         updateSelectedGroupsDisplay();
       }
 
-      // Helper function to parse date strings including BC dates
+      // Helper function to parse stored date strings ("1985-11-15", "-27-01-16" = 27 BC)
       function parseDateString(dateStr) {
         if (!dateStr) return null;
 
         const match = dateStr.match(/^(-?\d+)-(\d+)-(\d+)/);
         if (!match) return null;
 
-        const year = parseInt(match[1], 10);
-        const month = parseInt(match[2], 10) - 1; // JS months are 0-indexed
-        const day = parseInt(match[3], 10);
-
-        // For BC dates (negative years), create a date and set the year manually
-        if (year < 0) {
-          const date = new Date(0, month, day);
-          date.setFullYear(year);
-          return date;
-        }
-
-        // For CE dates, use standard Date constructor
-        const date = new Date(year, month, day);
-        if (year >= 0 && year < 100) {
-          date.setFullYear(year);
-        }
+        // setFullYear() takes the year literally: new Date(79, 7, 24) would mean 1979.
+        // Year, month and day are set together, so 29 February is not lost on the way.
+        const date = new Date(0);
+        date.setFullYear(
+          toAstronomicalYear(parseInt(match[1], 10)),
+          parseInt(match[2], 10) - 1, // JS months are 0-indexed
+          parseInt(match[3], 10)
+        );
+        date.setHours(0, 0, 0, 0);
         return date;
+      }
+
+      const DEFAULT_ITEM_COLOR = "#428bad"; // keep in sync with .vis-item in <style>
+
+      function selectionClass(id) {
+        if (selectedEventIds[0] == id) return "selected-item-1";
+        if (selectedEventIds[1] == id) return "selected-item-2";
+        return "";
+      }
+
+      // The only place where a stored event is turned into a vis-timeline item
+      function toItem(event) {
+        const item = { ...event, start: parseDateString(event.start) };
+
+        if (event.end) {
+          item.end = parseDateString(event.end);
+        } else {
+          // events with only a start date are drawn as points
+          item.type = "point";
+        }
+
+        // Firestore events keep the picture under imageUrl
+        if (event.imageUrl) {
+          item.image = event.imageUrl;
+        }
+
+        // Background from the event (or the CSS default), text colour computed to contrast with it.
+        // A point without its own colour has no background at all (vis-timeline draws only
+        // the dot and the label), so it keeps the normal page text colour.
+        const hasCustomColor =
+          event.color && /^#[0-9A-Fa-f]{6}$/.test(event.color);
+        if (hasCustomColor) {
+          item.style = `background-color: ${event.color}; color: ${getComplementaryColor(event.color)};`;
+        } else if (event.end) {
+          item.style = `color: ${getComplementaryColor(DEFAULT_ITEM_COLOR)};`;
+        }
+
+        item.className = selectionClass(event.id);
+
+        return item;
+      }
+
+      // Replace everything shown on the page with the given list of stored events
+      function setEvents(data) {
+        allEvents = data;
+
+        // Forget filters whose button is about to disappear
+        const availableFilters = new Set(getAllUniqueGroups());
+        if (allEvents.some((e) => !e.group || e.group.length === 0)) {
+          availableFilters.add(NO_GROUP);
+        }
+        activeFilters.forEach((g) => {
+          if (!availableFilters.has(g)) activeFilters.delete(g);
+        });
+
+        // Render group checkboxes and filter buttons
+        renderGroupCheckboxes();
+        renderGroupFilters();
+
+        // Forget selected events which no longer exist
+        const ids = new Set(data.map((e) => String(e.id)));
+        selectedEventIds = selectedEventIds.filter((id) => ids.has(String(id)));
+
+        timelineItems.clear();
+        timelineItems.add(data.map(toItem));
+
+        if (!timeline) {
+          createTimeline();
+        }
+
+        // Refresh the panels below the timeline with the new data
+        renderComparison();
+        const detailEvent = detailEventId === null ? null : timelineItems.get(detailEventId);
+        if (detailEvent) {
+          renderEventDetails(detailEvent);
+        } else {
+          clearEventDetails();
+        }
+      }
+
+      // Move the timeline to the given event, if it is currently visible
+      function focusEvent(id) {
+        if (!timeline || id === null || id === undefined) return;
+        if (!visibleItems.get(id)) return;
+        timeline.focus(id, { zoom: false });
       }
 
       // Render event details functions
       function renderEventDetails(ev) {
         if (!ev) return;
+        detailEventId = ev.id;
         document.getElementById("detailTitle").textContent = ev.title || "";
         const imgDiv = document.getElementById("detailImageContainer");
         imgDiv.innerHTML = "";
@@ -1884,7 +1695,8 @@
         }
         const contentDiv = document.getElementById("detailContent");
         const markdown = ev.content || "";
-        contentDiv.innerHTML = marked.parse(markdown);
+        // event descriptions may contain HTML, never insert it unsanitised
+        contentDiv.innerHTML = DOMPurify.sanitize(marked.parse(markdown));
 
         // Format and display date(s)
         const startDateSpan = document.getElementById("detailStartDate");
@@ -1920,159 +1732,112 @@
       }
 
       function clearEventDetails() {
+        detailEventId = null;
         document.getElementById("eventDetails").style.display = "none";
       }
 
       async function loadEvents() {
+        let data;
+
         try {
           console.log("loadEvents: Fetching from Firestore...");
-          
+
           // Create a timeout promise
           const timeout = new Promise((_, reject) =>
             setTimeout(() => reject(new Error("Firestore operation timed out")), 5000)
           );
 
           // Race between fetch and timeout
-          const data = await Promise.race([
+          data = await Promise.race([
             loadEventsFromFirestore(firebaseDb),
             timeout
           ]);
 
           console.log("loadEvents: Fetched data:", data);
-          
-          // Store raw events for filtering
-          allEvents = data;
-
-          // Render group checkboxes and filter buttons
-          renderGroupCheckboxes();
-          renderGroupFilters();
-
-          // Preprocess events: add type="point" for events with only start date
-          // and convert date strings to Date objects for vis-timeline
-          console.log("loadEvents: Processing events...");
-          const processedData = data.map((event) => {
-            const processed = { ...event };
-
-            // Convert start date string to Date object
-            if (event.start) {
-              processed.start = parseDateString(event.start);
-            }
-            
-            console.log(`Event ${event.id}:`, {
-              title: event.title,
-              rawStart: event.start,
-              parsedStart: processed.start,
-              validDate: processed.start instanceof Date && !isNaN(processed.start)
-            });
-
-            // Convert end date string to Date object
-            if (event.end) {
-              processed.end = parseDateString(event.end);
-            } else {
-              // Add type="point" for events with only start date
-              processed.type = "point";
-            }
-
-            // Apply custom color if specified
-            if (event.color) {
-              processed.style = `background-color: ${event.color};`;
-            }
-
-            // Map imageUrl to image for vis-timeline
-            if (event.imageUrl) {
-              processed.image = event.imageUrl;
-            }
-
-            return processed;
-          });
-
-          if (!timelineItems) { // Initialize DataSet if it doesn't exist
-            console.log("Initializing timeline with items:", processedData);
-            timelineItems = new DataSet(processedData);
-          } else {
-            timelineItems.clear();
-            console.log("Adding items to timeline:", processedData);
-            timelineItems.add(processedData);
-          }
-
-          if (timeline) {
-            timeline.setItems(timelineItems);
-          } else {
-            createTimeline();
-          }
-
         } catch (error) {
           console.error("Error loading events:", error);
           // Fallback to empty list to ensure timeline renders
           console.warn("Falling back to empty event list.");
-          const data = [];
-          
-          // Proceed with empty data
-          // allEvents = data; // Commented out to avoid ReferenceError if shadowing occurs
 
-          // Process events (same logic as success case)
-          const processedEvents = data.map((event) => {
-            const processed = { ...event };
-
-            // Apply custom color if specified
-            if (event.color) {
-              processed.style = `background-color: ${event.color};`;
-            }
-
-            // Map imageUrl to image for vis-timeline
-            if (event.imageUrl) {
-              processed.image = event.imageUrl;
-            }
-
-            return processed;
-          });
-
-          // Update or create timeline
-          if (timelineItems) {
-            timelineItems.clear();
-            console.log("Adding items to timeline:", processedEvents);
-            timelineItems.add(processedEvents);
-            timeline.setItems(timelineItems);
-          } else {
-            timelineItems = new DataSet(processedEvents);
+          timelineItems.clear();
+          if (!timeline) {
             createTimeline();
           }
-          
-          // Fit timeline to show all events
-          if (timeline) {
-            timeline.fit();
-          }
+          timeline.fit();
+          return;
         }
+
+        setEvents(data);
       }
+
+      // Default axis label patterns of vis-timeline (TimeStep.FORMAT). They are repeated here
+      // because a custom label function replaces the labels of every scale, not only of years.
+      const AXIS_FORMATS = {
+        minorLabels: {
+          millisecond: "SSS",
+          second: "s",
+          minute: "HH:mm",
+          hour: "HH:mm",
+          weekday: "ddd D",
+          day: "D",
+          week: "w",
+          month: "MMM",
+          year: "YYYY",
+        },
+        majorLabels: {
+          millisecond: "HH:mm:ss",
+          second: "D MMMM HH:mm",
+          minute: "ddd D MMMM",
+          hour: "ddd D MMMM",
+          weekday: "MMMM YYYY",
+          day: "MMMM YYYY",
+          week: "MMMM YYYY",
+          month: "YYYY",
+          year: "",
+        },
+      };
+
+      // Axis labels with years printed as "27 BC" instead of "-0026"
+      function axisLabel(kind) {
+        return function (date, scale) {
+          const pattern = AXIS_FORMATS[kind][scale];
+          if (!pattern) return "";
+
+          const year = toHistoricalYear(date.year());
+          const yearText = year < 0 ? `${-year} BC` : String(year);
+          // "[...]" makes moment print the text literally instead of its own year
+          return date.format(pattern.replace("YYYY", `[${yearText}]`));
+        };
+      }
+
+      const DAY = 1000 * 60 * 60 * 24;
 
       function createTimeline() {
         const options = {
-          dataAttributes: ["id"], // Expose data-id attribute on timeline items
-          tooltip: {
-            followMouse: false,
-            overflowMethod: "none",
-          },
-          editable: {
-            add: false, // Disable adding via double-click
-            updateTime: false, // Disable moving/dragging items
-            updateGroup: false, // Disable group changes
-            remove: false, // Disable native delete button (we use custom UI),
-
-            overrideItems: false,
-          },
+          showTooltips: false, // details are shown in the panel below the timeline
+          editable: false, // adding, editing and deleting go through our own forms
           selectable: false, // Disable default selection to use custom logic
+          zoomMin: DAY * 7, // dates have day precision, no point zooming further in
+          zoomMax: DAY * 365.25 * 10000,
+          zoomKey: "ctrlKey", // plain wheel scrolls the page / the rows, Ctrl + wheel (or pinch) zooms
+          maxHeight: "70vh",
+          verticalScroll: true,
+          format: {
+            minorLabels: axisLabel("minorLabels"),
+            majorLabels: axisLabel("majorLabels"),
+          },
           template: function (item, element, data) {
             const container = document.createElement("span");
             container.style.display = "flex";
             container.style.alignItems = "center";
             container.style.gap = "5px";
-            // Add data-id for custom selection logic
-            container.dataset.id = item.id;
 
             if (item.image) {
               const img = document.createElement("img");
-              // Try thumbnail first, fallback to original
-              const thumbPath = item.image.replace("img/", "thumb/");
+              // Try thumbnail first (local images only), fallback to original
+              const thumbPath = item.image.startsWith("img/")
+                ? "thumb/" + item.image.slice("img/".length)
+                : item.image;
               img.src = thumbPath;
               img.onerror = function () {
                 this.onerror = null;
@@ -2094,34 +1859,39 @@
 
             return container;
           },
-          onMove: function (item, callback) {
-            callback(item);
-            saveEvents();
-          },
-          onUpdate: function (item, callback) {
-            // Simplified update for now - just save position changes
-            callback(item);
-            saveEvents();
-          },
-          onRemove: function (item, callback) {
-            // Store the callback to use after confirmation
-            window.pendingDeleteCallback = callback;
-            window.pendingDeleteItem = item;
-            openDeleteModal(item.id);
-          },
         };
 
-        // Render event details functions
+        timeline = new Timeline(visualizationContainer, visibleItems, options);
 
-        timeline = new Timeline(visualizationContainer, timelineItems, options);
+        // Click selects. The browser also fires a click at the end of a drag which started
+        // and ended on the same item, so remember where the button went down and ignore
+        // clicks which travelled further than a few pixels (that was panning, not clicking).
+        const CLICK_MAX_TRAVEL_PX = 5;
+        let pressPoint = null;
+
+        timeline.on("mouseDown", function (properties) {
+          pressPoint = { x: properties.pageX, y: properties.pageY };
+        });
+
+        timeline.on("click", function (properties) {
+          if (properties.item === null || properties.item === undefined) return;
+
+          const travelled = pressPoint
+            ? Math.hypot(properties.pageX - pressPoint.x, properties.pageY - pressPoint.y)
+            : 0;
+          if (travelled > CLICK_MAX_TRAVEL_PX) return;
+
+          // properties.item is the event id in its original type,
+          // properties.event is the native click with the modifier keys
+          handleSelection(properties.item, properties.event);
+        });
+
         // Add double-click listener to open edit modal
         timeline.on("doubleClick", function (properties) {
           if (properties.item) {
             openEditModal(properties.item);
           }
         });
-
-        // Add select listener to show event details
       }
 
       // Helper function to convert Date objects back to date strings
@@ -2129,30 +1899,11 @@
         if (!date) return null;
         if (typeof date === "string") return date; // Already a string
 
-        const year = date.getFullYear();
+        const year = toHistoricalYear(date.getFullYear());
         const month = String(date.getMonth() + 1).padStart(2, "0");
         const day = String(date.getDate()).padStart(2, "0");
 
         return `${year}-${month}-${day}`;
-      }
-
-      async function saveEvents() {
-        const data = timelineItems.get();
-
-        // Convert Date objects back to date strings for JSON storage
-        const dataToSave = data.map((event) => ({
-          ...event,
-          start: formatDateToString(event.start),
-          end: event.end ? formatDateToString(event.end) : undefined,
-        }));
-
-        try {
-          await saveAllEventsToFirestore(firebaseDb, dataToSave);
-          console.log("Success: Events saved to Firestore");
-        } catch (error) {
-          console.error("Error saving events:", error);
-          alert("Failed to save events to Firestore. Please check console.");
-        }
       }
 
       // Initial Load
@@ -2161,23 +1912,11 @@
 
       // --- Custom Selection Logic ---
       function isMobileDevice() {
-        return (
-          navigator.maxTouchPoints > 0 ||
-          window.matchMedia("(max-width: 1024px)").matches
-        );
+        // primary input is a finger - not "has a touch screen" or "window is narrow"
+        return window.matchMedia("(pointer: coarse)").matches;
       }
-      let selectedEventIds = [];
 
-      // Handle click events for selection
-      document.body.addEventListener("click", function (e) {
-        // Find closest element with data-id (our timeline items)
-        const el = e.target.closest("[data-id]");
-
-        if (el) {
-          const id = el.dataset.id;
-          handleSelection(id, e);
-        }
-      });
+      // Clicks on items are handled by timeline.on("click") in createTimeline()
 
       // Handle ESC key to clear selection
       document.addEventListener("keydown", function (e) {
@@ -2186,28 +1925,7 @@
         }
       });
 
-      function handleSelection(id, event) {
-        const isModifierPressed =
-          event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
-
-        // Convert id to number if needed (vis-timeline might use numbers)
-        // But dataset is always string. Let's check items to see type.
-        // items.get(id) works with both usually if IDs are simple.
-        // Let's keep it as is from dataset (string) but cast if needed.
-        // Actually, vis-timeline IDs can be strings or numbers.
-        // We should check what type our IDs are.
-        // In loadEvents we don't force type.
-        // Let's try to match type from items.
-        let targetId = id;
-        const item = timelineItems.get(id);
-        if (!item) {
-          // Try converting to number
-          const numId = parseInt(id, 10);
-          if (timelineItems.get(numId)) {
-            targetId = numId;
-          }
-        }
-
+      function handleSelection(targetId, event) {
         if (isMobileDevice()) {
           if (selectedEventIds.length === 1 && selectedEventIds[0] !== targetId) {
             // Case: One selected -> Select as #2
@@ -2252,15 +1970,9 @@
 
         // Show details for the clicked event
         if (selectedEventIds.includes(targetId)) {
-          const ev = timelineItems.get(targetId);
-          if (ev) {
-            const content = ev.content || ev.title || "Event";
-            document.getElementById("detailTitle").textContent = content;
-            renderEventDetails(ev);
-          }
+          renderEventDetails(timelineItems.get(targetId));
         } else if (selectedEventIds.length > 0) {
-          const ev = timelineItems.get(selectedEventIds[0]);
-          renderEventDetails(ev);
+          renderEventDetails(timelineItems.get(selectedEventIds[0]));
         } else {
           clearEventDetails();
         }
@@ -2274,27 +1986,19 @@
       }
 
       function updateSelectionVisuals() {
-        // Reset all items classes
+        // one batched update with only the items whose class really changes
+        const changes = [];
+
         timelineItems.forEach((item) => {
-          const updatedItem = { ...item, className: "" };
-          // We need to preserve existing classes if any?
-          // For now assuming no other critical classes are managed via className property on data items directly.
-          // Vis-timeline uses className property on item data.
-
-          // Actually, better to only update the ones that changed to avoid full re-render if possible,
-          // but iterating all is safer to ensure clean state.
-
-          let className = "";
-          if (selectedEventIds[0] == item.id) {
-            className = "selected-item-1";
-          } else if (selectedEventIds[1] == item.id) {
-            className = "selected-item-2";
-          }
-
-          if (item.className !== className) {
-            timelineItems.update({ id: item.id, className: className });
+          const className = selectionClass(item.id);
+          if ((item.className || "") !== className) {
+            changes.push({ id: item.id, className });
           }
         });
+
+        if (changes.length > 0) {
+          timelineItems.update(changes);
+        }
       }
 
       function renderComparison() {
@@ -2321,6 +2025,11 @@
 
         const ev1 = timelineItems.get(selectedEventIds[0]);
         const ev2 = selectedEventIds[1] ? timelineItems.get(selectedEventIds[1]) : null;
+
+        if (!ev1 || !ev2) {
+          container.className = "";
+          return;
+        }
 
         // Simple SVG visualization
         const width = container.clientWidth - 40;
@@ -2456,7 +2165,7 @@
         svg += `<text x="${(x1Start + x1End) / 2}" y="${
           y1 - 25
         }" text-anchor="middle" font-weight="bold" font-size="14">${
-          ev1.title
+          escapeHtml(ev1.title)
         }</text>`;
 
         // Labels A, B
@@ -2510,7 +2219,7 @@
           svg += `<text x="${(x2Start + x2End) / 2}" y="${
             y2 - 25
           }" text-anchor="middle" font-weight="bold" font-size="14">${
-            ev2.title
+            escapeHtml(ev2.title)
           }</text>`;
 
           // Labels C, D
@@ -2569,11 +2278,11 @@
           // Draw dimension lines
           let dimY = 180; // Moved down from 140
           const drawDim = (p1, p2, yLevel) => {
-            if (!p1.exists && p1.label !== "A" && p1.label !== "C") return; // Skip if point doesn't exist (except starts which always exist)
-            if (!p2.exists && p2.label !== "A" && p2.label !== "C") return;
+            if (!p1.exists && p1.label !== "A" && p1.label !== "C") return ""; // Skip if point doesn't exist (except starts which always exist)
+            if (!p2.exists && p2.label !== "A" && p2.label !== "C") return "";
 
             // Don't draw if same point
-            if (p1.x === p2.x) return;
+            if (p1.x === p2.x) return "";
 
             const minX = Math.min(p1.x, p2.x);
             const maxX = Math.max(p1.x, p2.x);

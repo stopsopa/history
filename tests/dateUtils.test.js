@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { calculateDuration, formatDateForDisplay } from '../lib/dateUtils.js';
+import { calculateDuration, formatDateForDisplay, toAstronomicalYear, toHistoricalYear } from '../lib/dateUtils.js';
 
 describe('formatDateForDisplay', () => {
   test('should return empty string for empty input', () => {
@@ -37,8 +37,8 @@ describe('formatDateForDisplay', () => {
   });
 
   test('should handle BCE dates (negative years)', () => {
-    expect(formatDateForDisplay('-100-01-15')).toBe('15 January -100');
-    expect(formatDateForDisplay('-0500-06-20')).toBe('20 June -0500');
+    expect(formatDateForDisplay('-100-01-15')).toBe('15 January 100 BC');
+    expect(formatDateForDisplay('-0500-06-20')).toBe('20 June 500 BC');
   });
 
   test('should handle padded month and day values', () => {
@@ -125,6 +125,12 @@ describe('calculateDuration', () => {
 
   test('should handle BCE dates (negative years)', () => {
     expect(calculateDuration('-100-01-01', '-99-01-01')).toBe('1 year');
+    // there is no year 0: 27 BC -> 476 AD is 502 years, 1 BC -> 1 AD is 1 year
+    expect(calculateDuration('-27-01-01', '476-01-01')).toBe('502 years');
+    expect(calculateDuration('-1-01-01', '1-01-01')).toBe('1 year');
+    // 5 BC (astronomical -4) is a leap year, 4 BC is not
+    expect(calculateDuration('-5-02-28', '-5-03-01')).toBe('2 days');
+    expect(calculateDuration('-4-02-28', '-4-03-01')).toBe('1 day');
     expect(calculateDuration('-100-06-15', '-100-12-31')).toBe('6 months 16 days');
   });
 
@@ -155,5 +161,19 @@ describe('calculateDuration', () => {
     expect(() => calculateDuration('invalid', '2024-01-01')).toThrow('Invalid date format');
     expect(() => calculateDuration('2024-01-01', 'invalid')).toThrow('Invalid date format');
     expect(() => calculateDuration('2024-01', '2024-01-01')).toThrow('Invalid date format');
+  });
+});
+
+describe('toAstronomicalYear / toHistoricalYear', () => {
+  test('should convert BC years and leave AD years alone', () => {
+    expect(toAstronomicalYear(-27)).toBe(-26);
+    expect(toAstronomicalYear(-1)).toBe(0);
+    expect(toAstronomicalYear(1)).toBe(1);
+    expect(toAstronomicalYear(1985)).toBe(1985);
+
+    expect(toHistoricalYear(-26)).toBe(-27);
+    expect(toHistoricalYear(0)).toBe(-1);
+    expect(toHistoricalYear(1)).toBe(1);
+    expect(toHistoricalYear(1985)).toBe(1985);
   });
 });

@@ -109,3 +109,7 @@ export function autocolors(selector) {
         subtree: true
     });
 };
+
+// Used by custom.html / index.html to compute the text colour of a timeline item once,
+// when the item is created: getComplementaryColor("#428bad") -> "hsl(..., ..., 90%)"
+export { getComplementaryColor };
